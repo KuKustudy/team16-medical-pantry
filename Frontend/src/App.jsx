@@ -3,10 +3,12 @@ import { Home } from "./Pages/Home";
 import { Page1 } from "./Pages/Page1";
 import { Page2 } from "./Pages/Page2";
 import { Page3 } from "./Pages/Page3";
+import { Header } from "./Components/Header.jsx"
 
 export default function App() {
   return (
     <HashRouter>
+      <Header />
       <nav style={{display:"flex", gap:12, padding:12}}>
         <Link to="/">Home</Link>
         <Link to="/page1">Page1</Link>
