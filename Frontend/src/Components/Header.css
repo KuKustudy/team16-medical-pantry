@@ -1,17 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 .header {
-  position: fixed;   /* stick to viewport */
-  top: 0;            /* at the very top */
-  left: 0;           /* full width */
   width: 100%;
-  z-index: 1000;     /* keep it above page content */
-  
   background-color: #141a43;
-  padding: 10px 20px;
-  color: white;
+  color: #fff;
   display: flex;
-  justify-content: left;
   align-items: center;
-  font-family: 'Poppins', sans-serif;
+  left: 0;
+  /*  
+  position: fixed;
+  top: 0; 
+  */         
+}
+.header-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.navbar-brand-logo {
+  width: max-content;
+  height: 8.2rem;
+  object-fit: contain;
 }

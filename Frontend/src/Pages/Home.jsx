@@ -1,7 +1,10 @@
+import { Header } from "../Components/Header";
+
 export function Home(){
     return (
         <>
-            <h1>This is home page</h1>
+            <Header />
+            
         </>
     );
 }
