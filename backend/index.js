@@ -8,6 +8,13 @@ import cors from "cors";
 const app = express();
 const ocr = new EasyOCR();
 
+// variables used to query the FDA API
+const product_name = ""; // insert product name here
+const gtin = ""; // insert gtin here sameple: 0368001578592
+const base_api_url = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
+const product_name_query =
+  '+AND+openfda.generic_name:"' + product_name + '"&limit=10';
+const gtin_query = '+AND+openfda.upc:"' + gtin + '"&limit=10';
 
 const corsOptions = {
     origin: ["http://localhost:5173"],
@@ -21,8 +28,26 @@ console.log("ocr loaded");
 app.use(cors(corsOptions));
 app.use(express.json()); // automatically parse json request
 
-app.get("/api", (req, res) =>{
-    res.json({ fruits: ["apple", "organge", "banana"] });
+app.get("/api", async (req, res) => {
+  try {
+    // queries api using GTIN first and name if no GTIN is entered
+    let data;
+    if (gtin !== "") {
+      const fda_response = await fetch(base_api_url + gtin_query);
+      data = await fda_response.json()
+    } else if (product_name !== "") {
+      fda_response = await fetch(base_api_url + product_name_query);
+      data = await fda_response.json()
+    } else {
+      data = { message: "No GTIN or Product Name" };
+    }
+
+    res.json(data);
+
+  } catch (fetch_error) {
+    console.error(fetch_error);
+    res.status(500).send("Error fetching FDA data");
+  }
 });
 
 // this ia an async function, meaning we must wait til the function end
