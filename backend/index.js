@@ -4,9 +4,21 @@
 import express from "express";
 import { EasyOCR } from "node-easyocr";
 import cors from "cors";
+import {MongoClient, ServerApiVersion} from 'mongodb';
 
 const app = express();
 const ocr = new EasyOCR();
+// const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr.mongodb.net/?retryWrites=true&w=majority&appName=Medical-Data";
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
 
 
 const corsOptions = {
@@ -23,6 +35,16 @@ app.use(express.json()); // automatically parse json request
 
 app.get("/api", (req, res) =>{
     res.json({ fruits: ["apple", "organge", "banana"] });
+    run();
+    // client.connect();
+    // // Send a ping to confirm a successful connection
+    // client.db("admin").command({ ping: 1 })
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    
+    // const db = client.db("recall-guard");
+    // const collection = db.collection("medical_items");
+    // collection.find().toArray().then(result => console.log(result));
+
 });
 
 // this ia an async function, meaning we must wait til the function end
@@ -124,29 +146,27 @@ app.listen(8080, () => {
 });
 
 //mongodb database access
-//mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr.mongodb.net/?retryWrites=true&w=majority&appName=Medical-Data
-/*const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr.mongodb.net/?retryWrites=true&w=majority&appName=Medical-Data";
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    await client.connect()
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        
+    const db = client.db("recall-guard");
+    const collection = db.collection("medical_items");
+    // collection.find().toArray().then(result => console.log(result));
+
+    const result = await collection.find().toArray();
+    console.log(result);
+ 
   } finally {
     // Ensures that the client will close when you finish/error
     await client.close();
   }
 }
-run().catch(console.dir);*/
+run().catch(console.dir);
 
 export default app;
