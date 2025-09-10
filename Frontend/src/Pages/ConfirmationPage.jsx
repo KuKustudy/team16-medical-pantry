@@ -1,10 +1,10 @@
+import React, {useState} from "react";
 import { Header } from "../Components/Header";
 
-export function Home(){
+export function ConfirmationPage(){
     return (
         <>
             <Header />
-            
         </>
     );
 }

@@ -1,11 +1,16 @@
-import './Header.css'
+import './Header.css';
+import MedicalPantryLogo from "../assets/MedicalPantryLogo.png"; // adjust path as needed
 
-export function Header(){
-    return(
-        <header className="header">
-            <img className="navbar-brand-logo" src="https://firebasestorage.googleapis.com/v0/b/digital-axon-366208.appspot.com/o/sites%2Fa6gPkO2qPQnqrwJKWyGi%2Flogo%2FFrame%2010.png?alt=media&amp;token=bbbbfc1e-4a74-4aab-bdf1-4824c34bb3fb" width={180} height={54} alt="Medical Pantry Logo">
-            </img>
-            <h1>RECALL GUARD</h1>
-        </header>
-    );
+export function Header() {
+  return (
+    <header className="header" role="banner">
+      <button className="header-button">
+        <img 
+          className="navbar-brand-logo" 
+          src={MedicalPantryLogo} 
+          alt="Medical Pantry Logo" 
+        />
+      </button>
+    </header>
+  );
 }
