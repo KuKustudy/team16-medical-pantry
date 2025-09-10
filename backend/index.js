@@ -4,6 +4,9 @@
 import express from "express";
 import { EasyOCR } from "node-easyocr";
 import cors from "cors";
+import multer from "multer";
+import fs from "fs";  
+
 
 const app = express();
 const ocr = new EasyOCR();
@@ -144,6 +147,51 @@ app.get("/imagescan_testing", async (req, res) => {
 
 
 })
+
+
+
+const upload = multer({ dest: 'uploads/' });
+app.post("/imageprocessing", upload.single('photo'), async (req, res) => {
+    try {
+        console.log(req.file);
+
+        const imagePath = req.file.path;
+        const result = await ocr.readText(imagePath);
+        
+        console.log("OCR Result:");
+        result.forEach((item, index) => {
+            console.log(`Line ${index + 1}:`);
+            console.log(`  Text: ${item.text}`);
+            console.log(`  Confidence: ${(item.confidence * 100).toFixed(2)}%`);
+            console.log(`  Bounding Box: ${JSON.stringify(item.bbox)}`);
+            console.log('---');
+        })
+
+
+        // Convert OCR result into a JSON-friendly format
+        const jsonResponse = result.map((item, index) => ({
+            line: index + 1,
+            text: item.text,
+            confidence: (item.confidence * 100).toFixed(2) + "%",
+        }));
+
+        // Send the JSON response back to frontend
+        res.json({ success: true, data: jsonResponse });
+
+        // delete the image file after scanning
+        fs.unlink(imagePath, (err) => {
+            if (err) {
+                console.error('Failed to delete file:', err);
+            } else {
+                console.log('File deleted successfully');
+            }
+        });
+
+    } catch (error) {
+        console.error("OCR Error", error.message);
+    }
+})
+
 app.listen(8080, () => {
     console.log("Server started on port 8080");
 });
