@@ -10,11 +10,12 @@ const ocr = new EasyOCR();
 
 // variables used to query the FDA API
 const product_name = ""; // insert product name here
-const gtin = ""; // insert gtin here sameple: 0368001578592
+const gtin_for_query = "0368001578592"; // insert gtin here sameple: 0368001578592
 const base_api_url = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
 const product_name_query =
   '+AND+openfda.generic_name:"' + product_name + '"&limit=10';
-const gtin_query = '+AND+openfda.upc:"' + gtin + '"&limit=10';
+const gtin_query = '+AND+openfda.upc:"' + gtin_for_query + '"&limit=10';
+const result_list = [];
 
 const corsOptions = {
     origin: ["http://localhost:5173"],
@@ -32,7 +33,7 @@ app.get("/api", async (req, res) => {
   try {
     // queries api using GTIN first and name if no GTIN is entered
     let data;
-    if (gtin !== "") {
+    if (gtin_for_query !== "") {
       const fda_response = await fetch(base_api_url + gtin_query);
       data = await fda_response.json()
     } else if (product_name !== "") {
@@ -42,7 +43,23 @@ app.get("/api", async (req, res) => {
       data = { message: "No GTIN or Product Name" };
     }
 
-    res.json(data);
+    let results = data.results
+    for (let i = 0; i < results.length; i++){
+        const name = data.results[i].openfda.generic_name;
+        const gtin = data.results[i].openfda.upc;
+        const action = "Recall";
+        const start_date = data.results[i].recall_initiation_date;
+        const product_type = data.results[i].product_type;
+        const hazard_class = data.results[i].classification;
+        const data_source = "https://api.fda.gov/drug/enforcement.json"
+        result_list.push([name, gtin, action, start_date, product_type, hazard_class, data_source])
+        
+    }
+
+    let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
+    
+    res.json(unique_result);
+
 
   } catch (fetch_error) {
     console.error(fetch_error);
