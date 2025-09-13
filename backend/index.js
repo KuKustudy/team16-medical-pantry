@@ -34,8 +34,8 @@ app.use(cors(corsOptions));
 app.use(express.json()); // automatically parse json request
 
 app.get("/api", (req, res) =>{
-    res.json({ fruits: ["apple", "organge", "banana"] });
-    run();
+    res.json({ fruits: ["apple", "orange", "banana"] });
+    MongoConnect();
     // client.connect();
     // // Send a ping to confirm a successful connection
     // client.db("admin").command({ ping: 1 })
@@ -147,7 +147,7 @@ app.listen(8080, () => {
 
 //mongodb database access
 
-async function run() {
+async function mongoConnect() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect()
@@ -167,6 +167,6 @@ async function run() {
     await client.close();
   }
 }
-run().catch(console.dir);
+mongoConnect().catch(console.dir);
 
 export default app;
