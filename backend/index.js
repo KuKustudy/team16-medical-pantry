@@ -1,10 +1,23 @@
 // how to run it: cd to backend folder, and in your terminal, enter: npm run dev
 // then the backend will be run in localhost:8080/api
 
+/* 
+Medical data format
+let medical_data = {
+GTIN: "number",
+name: "drug name,"
+batch_number: "batch_num",
+lot_number: "lot_num",
+}
+
+*/
+
 import express from "express";
 import { EasyOCR } from "node-easyocr";
 import cors from "cors";
 import {MongoClient, ServerApiVersion} from 'mongodb';
+import { log } from "node:console";
+import { stringify } from "node:querystring";
 
 const app = express();
 const ocr = new EasyOCR();
@@ -14,7 +27,7 @@ const uri = "mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
+    strict: false,
     deprecationErrors: true,
   }
 });
@@ -33,9 +46,16 @@ console.log("ocr loaded");
 app.use(cors(corsOptions));
 app.use(express.json()); // automatically parse json request
 
-app.get("/api", (req, res) =>{
+app.get("/api", async (req, res) =>{
+    
+    const thing = {
+    GTIN: "hi",
+    name: "dug",
+    batch_number: 0,
+    lot_number: 0}
+
+    await mongoConnect(thing);
     res.json({ fruits: ["apple", "orange", "banana"] });
-    MongoConnect();
     // client.connect();
     // // Send a ping to confirm a successful connection
     // client.db("admin").command({ ping: 1 })
@@ -147,26 +167,63 @@ app.listen(8080, () => {
 
 //mongodb database access
 
-async function mongoConnect() {
+async function mongoConnect(medical_data) {
+    
+    await console.log("medical_data", medical_data)
+
+
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect()
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        
     const db = client.db("recall-guard");
     const collection = db.collection("medical_items");
     // collection.find().toArray().then(result => console.log(result));
 
-    const result = await collection.find().toArray();
-    console.log(result);
+    // convert medical_data object into mongo search
+    let should = []
+    for (var key in medical_data){
+        if (medical_data.hasOwnProperty(key)) {
+            await should.push({
+                text: {
+                    query: String(medical_data[key]),
+                    path: String(key),
+                    fuzzy: { maxEdits: 2 }
+                }
+            })
+        }
+    }
+
+    const pipeline = [
+        {
+            $search: {
+                index: "default",
+                compound: {
+                    should: should
+                }
+            }
+        },
+        // Add confidence scores to data
+        {
+            $project: {
+            GTIN: 1,
+            name: 1,
+            batch_number: 1,
+            lot_number: 1,
+            score: { $meta: "searchScore" } 
+            }
+        }
+    ]
+
+    const result = await collection.aggregate(pipeline).toArray();
+    await console.log(result);
  
   } finally {
     // Ensures that the client will close when you finish/error
     await client.close();
   }
 }
-mongoConnect().catch(console.dir);
 
 export default app;
