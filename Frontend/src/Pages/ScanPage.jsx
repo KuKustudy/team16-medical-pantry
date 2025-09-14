@@ -1,8 +1,13 @@
+import React from "react";
+import SimpleCam from "../Components/SimpleCam";
 
-export function ScanPage(){
-    return (
-        <>
-            <h1>This is scan page</h1>
-        </>
-    );
+
+export function ScanPage() {
+  return (
+    <>
+      <main style={{ padding: "16px" }}>
+        <SimpleCam />
+      </main>
+    </>
+  );
 }

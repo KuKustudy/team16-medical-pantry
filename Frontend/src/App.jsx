@@ -3,7 +3,7 @@ import { Home } from "./Pages/Home";
 import { ConfirmationPage } from "./Pages/ConfirmationPage";
 import { ListOfOptions } from "./Pages/OptionsPage";
 import { ScanPage } from "./Pages/ScanPage";
-import { AccountPage } from "./Pages/AccountPage";
+import AccountPage from "./Pages/AccountPage";
 
 export default function App() {
   return (
