@@ -26,7 +26,7 @@ await ocr.init(['en']);
 
 // variables used to query the FDA API
 const product_name = ""; // insert product name here
-const gtin_for_query = "0368001578592"; // insert gtin here sameple: 0368001578592
+const gtin_for_query = "0368001578592"; // insert gtin here sample: 0368001578592
 const base_api_url = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
 const product_name_query =
   '+AND+openfda.generic_name:"';
@@ -48,7 +48,6 @@ app.get("/api", async (req, res) => {
     let data;
     if (gtin_for_query !== "") {
         var converted_gtin = gtin_converter(gtin_for_query);
-        console.log(converted_gtin);
         const fda_response = await fetch(base_api_url + gtin_query + converted_gtin + limit_query);
         data = await fda_response.json()
 
@@ -120,21 +119,6 @@ function gtin_converter(gtin14){
     return gtin13
 }
 
-// this ia an async function, meaning we must wait til the function end
-// then we can pass back to frontend
-// ref: https://techbyvj.medium.com/introducing-node-easyocr-seamless-ocr-integration-for-node-js-applications-27b7ea1794fb
-app.post("/imagescan", async (req, res) => {
-    /*
-        expect frontend to send
-        {
-        "imagePath": "/folder/photo.jpg"
-        }
-    */
-    
-    try {
-        const imagePath = req.body.imagePath;
-        console.log("Received image paths", imagePath);
-    }
 /*
 * this imitates a POST request received from frontend.
 * This function scans text from a prestored image and prints the scanned
