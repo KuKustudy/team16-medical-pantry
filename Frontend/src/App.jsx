@@ -8,6 +8,7 @@ import AccountPage from "./Pages/AccountPage";
 export default function App() {
   return (
     <HashRouter>
+      <Header />
       <nav style={{display:"flex", gap:12, padding:12}}>
         <Link to="/">Home</Link>
         <Link to="/ScanPage">ScanPage</Link>
