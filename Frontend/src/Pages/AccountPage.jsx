@@ -1,10 +1,9 @@
 import { Header } from "../Components/Header";
 
-export function Home(){
+export default function AccountPage(){
     return (
         <>
             <Header />
-            
         </>
     );
 }
