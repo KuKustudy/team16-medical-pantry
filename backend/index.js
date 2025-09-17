@@ -250,12 +250,11 @@ app.listen(8080, () => {
 
 //mongodb database access
 
-async function mongoSearch(medical_data) {
+app.post("/mongoSearch", upload.single('medical_data'), async (req, res) => {
     
-    await console.log("medical_data", medical_data)
-
-
   try {
+    const medical_data = req.file;
+    console.log(medical_data);
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect()
     // Send a ping to confirm a successful connection
@@ -301,13 +300,13 @@ async function mongoSearch(medical_data) {
     ]
 
     const result = await collection.aggregate(pipeline).toArray();
-    await console.log(result);
+    res.json(result);
  
   } finally {
     // Ensures that the client will close when you finish/error
     await client.close();
   }
-}
+})
 
 async function mongoInsert(medical_data) {
 
