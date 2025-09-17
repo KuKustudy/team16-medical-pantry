@@ -50,11 +50,13 @@ await ocr.init(['en']);
 
 // variables used to query the FDA API
 const product_name = ""; // insert product name here
-const gtin = ""; // insert gtin here sameple: 0368001578592
+const gtin_for_query = "0368001578592"; // insert gtin here sample: 0368001578592
 const base_api_url = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
 const product_name_query =
-  '+AND+openfda.generic_name:"' + product_name + '"&limit=10';
-const gtin_query = '+AND+openfda.upc:"' + gtin + '"&limit=10';
+  '+AND+openfda.generic_name:"';
+const gtin_query = '+AND+openfda.upc:"';
+const limit_query = '"&limit=10'
+const result_list = [];
 
 
 /*
@@ -68,17 +70,38 @@ app.get("/api", async (req, res) => {
   try {
     // queries api using GTIN first and name if no GTIN is entered
     let data;
-    if (gtin !== "") {
-      const fda_response = await fetch(base_api_url + gtin_query);
-      data = await fda_response.json()
+    if (gtin_for_query !== "") {
+        var converted_gtin = gtin_converter(gtin_for_query);
+        const fda_response = await fetch(base_api_url + gtin_query + converted_gtin + limit_query);
+        data = await fda_response.json()
+
     } else if (product_name !== "") {
-      fda_response = await fetch(base_api_url + product_name_query);
-      data = await fda_response.json()
+        fda_response = await fetch(base_api_url + product_name_query + product_name + limit_query);
+        data = await fda_response.json()
+        
     } else {
-      data = { message: "No GTIN or Product Name" };
+        data = { message: "No GTIN or Product Name" };
     }
     await mongoInsert("hi");
-    res.json(data);
+    // pulling out the values for UI
+    let results = data.results
+    for (let i = 0; i < results.length; i++){
+        var name = data.results[i].openfda.generic_name;
+        var gtin = data.results[i].openfda.upc;
+        var action = "Recall";
+        var start_date = data.results[i].recall_initiation_date;
+        var product_type = data.results[i].product_type;
+        var hazard_class = data.results[i].classification;
+        var data_source = "https://api.fda.gov/drug/enforcement.json"
+        result_list.push([name, gtin, action, start_date, product_type, hazard_class, data_source])
+        
+    }
+
+    // removing duplicates
+    let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
+    
+    res.json(unique_result);
+
 
   } catch (fetch_error) {
     console.error(fetch_error);
@@ -86,6 +109,39 @@ app.get("/api", async (req, res) => {
   }
 });
 
+// function to convert GTIN 14 to GTIN 13
+function gtin_converter(gtin14){
+    var numbers = [];
+    var check_digit = 0;
+    var gtin13;
+
+    if (gtin14.length == 13){
+        return gtin14
+    }
+    
+    // ignores the first digit and check digit
+    for (var i = 1; i < gtin14.length-1; i++) {
+        numbers.push(parseInt(gtin14[i]));
+    }
+    
+    // calculate the check digit for GTIN13
+    for (var i = 0; i < numbers.length; i++){
+        
+        if (i % 2 == 0){
+            check_digit += numbers[i] * 1;
+        } else{
+            check_digit += numbers[i] * 3;
+        }
+    }
+
+    // extra % 10 in case of check_digit % 10 == 0
+    check_digit = (10 - (check_digit % 10)) % 10;
+
+    numbers.push(check_digit)
+    gtin13 = numbers.join("")
+
+    return gtin13
+}
 
 /*
 * this imitates a POST request received from frontend.

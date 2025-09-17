@@ -35,7 +35,7 @@ Database: MongoDB
 
     4. then enter command: npm run dev
 
-
+    5. backend server is running on 8080 port now, go to localhost:8080/api to test it out
 
 
 ## Reference links:
@@ -46,8 +46,9 @@ can be accessed on https://www.fda.gov/
 TGA: Therapeutic Goods Administration, Australian Government agency, their
 website can be accessed on https://www.tga.gov.au/
 
+HOW to set up test using Vitest: https://victorbruce82.medium.com/vitest-with-react-testing-library-in-react-created-with-vite-3552f0a9a19a
 
-    5. backend server is running on 8080 port now, go to localhost:8080/api to test it out
+
 
 
 
