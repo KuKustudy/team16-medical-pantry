@@ -82,7 +82,7 @@ app.get("/api", async (req, res) => {
     } else {
         data = { message: "No GTIN or Product Name" };
     }
-
+    await mongoInsert("hi");
     // pulling out the values for UI
     let results = data.results
     for (let i = 0; i < results.length; i++){
@@ -260,13 +260,11 @@ app.listen(8080, () => {
 });
 
 //mongodb database access
-
-async function mongoSearch(medical_data) {
-    
-    await console.log("medical_data", medical_data)
-
-
+app.use(express.json());
+app.post("/mongoSearch", async (req, res) => {
+    console.log(req.body); 
   try {
+    const medical_data = req.body;
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect()
     // Send a ping to confirm a successful connection
@@ -279,7 +277,8 @@ async function mongoSearch(medical_data) {
     // convert medical_data object into mongo search
     let should = []
     for (var key in medical_data){
-        if (medical_data.hasOwnProperty(key)) {
+        if (medical_data.hasOwnProperty(key) && 
+            String(medical_data[key]) != '') {
             await should.push({
                 text: {
                     query: String(medical_data[key]),
@@ -302,8 +301,8 @@ async function mongoSearch(medical_data) {
         // Add confidence scores to data
         {
             $project: {
-            GTIN: 1,
             name: 1,
+            GTIN: 1,
             batch_number: 1,
             lot_number: 1,
             score: { $meta: "searchScore" } 
@@ -312,13 +311,14 @@ async function mongoSearch(medical_data) {
     ]
 
     const result = await collection.aggregate(pipeline).toArray();
-    await console.log(result);
+    console.log(result);
+    res.json(result);
  
   } finally {
     // Ensures that the client will close when you finish/error
     await client.close();
   }
-}
+})
 
 async function mongoInsert(medical_data) {
 
