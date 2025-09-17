@@ -1,10 +1,7 @@
-
-
 .List-Of-Options{
   font-family: Arial, sans-serif;
   text-align: center;
   margin-top: 30px;
-
 }
 
 h1{
@@ -26,24 +23,18 @@ button{
   border-radius: 10px;
   cursor: pointer;
   transition: background-color 0.5s ease;
-
 }
+
 .expand-button{
   background-color: transparent;
-
 }
+
 .expand-icon {
   width: 70px;
   height: 70px; 
   padding-right: 2px;
 }
 
-.add-button{
-  background-color: #45A624;
-}
-.add-button:hover{
-  background-color: #45A624;
-}
 
 input[type="text"]{
   font-size: 1.6rem;
@@ -51,22 +42,46 @@ input[type="text"]{
   border-radius: 5px;
   color: black;
 }
+
 ol{
   padding: 0;
-
 }
-li{
-  font-size:1.5rem;
+
+.List-Of-Options li.option-row {
+  font-size: 1.5rem;
   padding: 7px;
-  background-color: #e35a5a;
   margin-bottom: 20px;
-  border: 3px solid #FBD2D2;
+  border: 3px solid #FBD2D2; /* default; overridden for green */
   border-radius: 27px;
   display: flex;
   align-items: center;
 }
+
+/* Recalled = RED */
+.List-Of-Options li.option-row.is-recalled {
+  background-color: #e35a5a;
+  border-color: #FBD2D2;
+}
+
+/* Not recalled = GREEN */
+.List-Of-Options li.option-row.is-clear {
+  background-color: #2f8711;
+  border-color: #3ace6b;
+}
+
 .text{
-  color: white;
+  color: rgb(255, 255, 255);
   flex: 1;
   padding: 10px;
+}
+
+.List-Of-Options .no-results {
+  margin: 24px auto 8px;
+  max-width: 600px;
+  padding: 14px 16px;
+  border: 2px dashed #e5e5e5;
+  border-radius: 16px;
+  background: #bebebe;
+  color: #333;          
+  font-size: 1.2rem;
 }

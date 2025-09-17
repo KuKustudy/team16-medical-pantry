@@ -1,7 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import "./MedicalInput.css";
+import { ScanPage } from "../Pages/ScanPage";
 
 export default function MedicalInput() {
+  const navigate = useNavigate();                
+
   const [queries, setQueries] = useState([]);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -12,11 +16,13 @@ export default function MedicalInput() {
   const [BatchNumber, setBatchNumber] = useState("");
   const [LotNumber, setLotNumber] = useState("");
 
+  // temporary database (delete when backend is ready)
   async function searchMedicalItem(query) {
     const MOCK_DB = [
-      { Name: "Paracetamol", GTIN_num: "09345678901234", Batch_num: "B123", Lot_num: "L001" },
-      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Batch_num: "B777", Lot_num: "L222" },
-      { Name: "Cetrizine",   GTIN_num: "00999999999999", Batch_num: "B123", Lot_num: "L003" },
+      { Name: "Paracetamol", GTIN_num: "09345678901234", Batch_num: "B123", Lot_num: "L001", recalled: true},
+      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Batch_num: "B777", Lot_num: "L222", recalled: true},
+      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Batch_num: "B111", Lot_num: "L111", recalled: false},
+      { Name: "Cetrizine",   GTIN_num: "00999999999999", Batch_num: "B123", Lot_num: "L003", recalled: false},
     ];
 
     const name  = query.Name.trim().toLowerCase();
@@ -36,11 +42,12 @@ export default function MedicalInput() {
   async function handleSearchItem() {
     setError("");
 
-    // At least one of ItemName OR GTIN must be provided
-    if (!ItemName.trim() && !GTIN.trim()) {
-      setError("Please enter either an Item Name or a GTIN number.");
-      return;
-    }
+    // require at least Item Name or GTIN
+  if (GTIN && !/^\d{8,14}$/.test(GTIN.trim())) {
+    setError("GTIN must be 8–14 digits (numbers only).");
+    return;
+  }
+
 
     const query = {
       Name: ItemName || "",
@@ -54,15 +61,13 @@ export default function MedicalInput() {
       const found = await searchMedicalItem(query);
       setResults(found);
       setQueries(prev => [query, ...prev]);
+
+      // redirect to OptionsPage with the results
+      navigate("/OptionsPage", { state: { results: found } });
     } catch {
       setError("Search failed. Please try again.");
     } finally {
       setLoading(false);
-      // reset inputs after search
-      setItemName("");
-      setGTIN("");
-      setBatchNumber("");
-      setLotNumber("");
     }
   }
 
@@ -76,7 +81,7 @@ export default function MedicalInput() {
   }
 
   function handleRescan() {
-    
+    navigate("/ScanPage");
   }
 
   return (
@@ -97,6 +102,7 @@ export default function MedicalInput() {
           value={GTIN}
           onChange={e => setGTIN(e.target.value)}
           placeholder="Enter GTIN Number"
+          inputMode="numeric"
         />
         <h3>Batch Number:</h3>
         <input
@@ -113,7 +119,6 @@ export default function MedicalInput() {
           placeholder="Enter Lot Number"
         />
 
-        {/* Actions: Recan, clear and search button*/}
         <div className="actions">
           <button className="rescan-button" type="button" onClick={handleRescan}>
             Rescan
@@ -132,40 +137,6 @@ export default function MedicalInput() {
       </div>
 
       {error && <p style={{ color: "crimson", marginTop: 12 }}>{error}</p>}
-
-      {/* Results */}
-      <div style={{ marginTop: 20 }}>
-        <h3>Results</h3>
-        {loading && <p>Loading…</p>}
-        {!loading && results.length === 0 && <p>No results to show.</p>}
-        {!loading && results.length > 0 && (
-          <ul>
-            {results.map((r, idx) => (
-              <li key={idx}>
-                <b>{r.Name}</b> — GTIN: {r.GTIN_num}
-                {r.Batch_num ? ` | Batch: ${r.Batch_num}` : ""}
-                {r.Lot_num ? ` | Lot: ${r.Lot_num}` : ""}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Query history */}
-      <div style={{ marginTop: 20 }}>
-        <h4>Recent Searches</h4>
-        {queries.length === 0 ? (
-          <p>None yet.</p>
-        ) : (
-          <ol>
-            {queries.map((q, i) => (
-              <li key={i}>
-                {q.Name || "(no name)"} | {q.GTIN_num || "(no GTIN)"} | {q.Batch_num || "(no batch)"} | {q.Lot_num || "(no lot)"}
-              </li>
-            ))}
-          </ol>
-        )}
-      </div>
     </div>
   );
 }
