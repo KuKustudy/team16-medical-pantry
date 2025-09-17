@@ -77,7 +77,7 @@ app.get("/api", async (req, res) => {
     } else {
       data = { message: "No GTIN or Product Name" };
     }
-
+    await mongoInsert("hi");
     res.json(data);
 
   } catch (fetch_error) {
@@ -193,7 +193,7 @@ app.listen(8080, () => {
 
 //mongodb database access
 
-async function mongoConnect(medical_data) {
+async function mongoSearch(medical_data) {
     
     await console.log("medical_data", medical_data)
 
@@ -246,6 +246,28 @@ async function mongoConnect(medical_data) {
     const result = await collection.aggregate(pipeline).toArray();
     await console.log(result);
  
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+
+async function mongoInsert(medical_data) {
+
+    await console.log("inserting ", medical_data);
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect()
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        const db = client.db("recall-guard");
+        const collection = db.collection("medical_items");
+        // collection.find().toArray().then(result => console.log(result));
+
+        // convert medical_data object into mongo search
+        await collection.insertMany(medical_data);
+    
   } finally {
     // Ensures that the client will close when you finish/error
     await client.close();
