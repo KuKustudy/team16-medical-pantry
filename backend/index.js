@@ -260,12 +260,11 @@ app.listen(8080, () => {
 });
 
 //mongodb database access
-
-app.post("/mongoSearch", upload.single('medical_data'), async (req, res) => {
-    
+app.use(express.json());
+app.post("/mongoSearch", async (req, res) => {
+    console.log(req.body); 
   try {
-    const medical_data = req.file;
-    console.log(medical_data);
+    const medical_data = req.body;
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect()
     // Send a ping to confirm a successful connection
@@ -278,7 +277,8 @@ app.post("/mongoSearch", upload.single('medical_data'), async (req, res) => {
     // convert medical_data object into mongo search
     let should = []
     for (var key in medical_data){
-        if (medical_data.hasOwnProperty(key)) {
+        if (medical_data.hasOwnProperty(key) && 
+            String(medical_data[key]) != '') {
             await should.push({
                 text: {
                     query: String(medical_data[key]),
@@ -301,8 +301,8 @@ app.post("/mongoSearch", upload.single('medical_data'), async (req, res) => {
         // Add confidence scores to data
         {
             $project: {
-            GTIN: 1,
             name: 1,
+            GTIN: 1,
             batch_number: 1,
             lot_number: 1,
             score: { $meta: "searchScore" } 
@@ -311,6 +311,7 @@ app.post("/mongoSearch", upload.single('medical_data'), async (req, res) => {
     ]
 
     const result = await collection.aggregate(pipeline).toArray();
+    console.log(result);
     res.json(result);
  
   } finally {
