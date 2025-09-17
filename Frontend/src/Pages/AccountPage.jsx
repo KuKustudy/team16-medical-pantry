@@ -1,6 +1,6 @@
 import { Header } from "../Components/Header";
 
-export function AccountPage(){
+export default function AccountPage(){
     return (
         <>
             <Header />
