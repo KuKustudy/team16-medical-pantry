@@ -42,7 +42,7 @@ export default function MedicalInput() {
   async function handleSearchItem() {
     setError("");
 
-    // require at least Item Name or GTIN
+    // require at least Item Name or GTIN(hasa to be between 8-14 digits)
   if (GTIN && !/^\d{8,14}$/.test(GTIN.trim())) {
     setError("GTIN must be 8–14 digits (numbers only).");
     return;
