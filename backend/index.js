@@ -96,12 +96,13 @@ app.get("/api", async (req, res) => {
         result_list.push([name, gtin, action, start_date, product_type, hazard_class, data_source])
         
     }
+    await mongoInsert();
+    res.json(data);
 
     // removing duplicates
     let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
     
     res.json(unique_result);
-
 
   } catch (fetch_error) {
     console.error(fetch_error);
