@@ -208,21 +208,32 @@ app.post("/imageprocessing", upload.single('photo'), async (req, res) => {
         const result = await ocr.readText(imagePath);
 
         console.log("OCR Result:");
-        result.forEach((item, index) => {
-            console.log(`Line ${index + 1}:`);
-            console.log(`  Text: ${item.text}`);
-            console.log(`  Confidence: ${(item.confidence * 100).toFixed(2)}%`);
-            console.log(`  Bounding Box: ${JSON.stringify(item.bbox)}`);
-            console.log('---');
-        })
+        // if you want print line by line
+        // result.forEach((item, index) => {
+        //     console.log(`Line ${index + 1}:`);
+        //     console.log(`  Text: ${item.text}`);
+        //     console.log(`  Confidence: ${(item.confidence * 100).toFixed(2)}%`);
+        //     console.log(`  Bounding Box: ${JSON.stringify(item.bbox)}`);
+        //     console.log('---');
+        // })
+
+        const fullText = result.map(item => item.text).join(" ");
+
+        // Log the concatenated text
+        console.log("Full OCR Text:", fullText);
 
 
         // Convert OCR result into a JSON-friendly format
-        const jsonResponse = result.map((item, index) => ({
-            line: index + 1,
-            text: item.text,
-            confidence: (item.confidence * 100).toFixed(2) + "%",
-        }));
+        // const jsonResponse = result.map((item, index) => ({
+        //     line: index + 1,
+        //     text: item.text,
+        //     confidence: (item.confidence * 100).toFixed(2) + "%",
+        //     fullText: fullText,
+        // }));
+
+        const jsonResponse = {
+            fullText: fullText,
+        };
 
         // Send the JSON response back to frontend
         res.json({ success: true, data: jsonResponse });
