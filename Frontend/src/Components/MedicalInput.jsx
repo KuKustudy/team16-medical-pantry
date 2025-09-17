@@ -16,6 +16,7 @@ export default function MedicalInput() {
   const [BatchNumber, setBatchNumber] = useState("");
   const [LotNumber, setLotNumber] = useState("");
 
+  /*
   // temporary database (delete when backend is ready)
   async function searchMedicalItem(query) {
     const MOCK_DB = [
@@ -26,9 +27,9 @@ export default function MedicalInput() {
     ];
 
     const name  = query.Name.trim().toLowerCase();
-    const gtin  = query.GTIN_num.trim();
-    const batch = query.Batch_num.trim().toLowerCase();
-    const lot   = query.Lot_num.trim().toLowerCase();
+    const GTIN  = query.GTIN_num.trim();
+    const batch_number = query.Batch_num.trim().toLowerCase();
+    const lot_number   = query.Lot_num.trim().toLowerCase();
 
     return MOCK_DB.filter(item => {
       const nameOK  = !name  || item.Name.toLowerCase().includes(name);
@@ -38,6 +39,9 @@ export default function MedicalInput() {
       return nameOK && gtinOK && batchOK && lotOK;
     });
   }
+  */
+
+
 
   async function handleSearchItem() {
     setError("");
@@ -48,13 +52,30 @@ export default function MedicalInput() {
     return;
   }
 
+  const query = {
+  name: ItemName || "",
+  GTIN: GTIN || "",
+  batch_number: BatchNumber || "",
+  lot_number: LotNumber || ""
+  };
 
-    const query = {
-      Name: ItemName || "",
-      GTIN_num: GTIN || "",
-      Batch_num: BatchNumber || "",
-      Lot_num: LotNumber || "",
-    };
+  fetch("http://localhost:8080/mongoSearch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(query)
+  }).then(response => {
+  if (!response.ok) {
+    throw new Error("Server error: " + response.status);
+  }
+  return response.json(); // or response.text() if backend returns plain text
+  })
+  .then(data => {
+    console.log("Response from server:", data);
+  })
+  .catch(error => {
+    console.error("Fetch error:", error);
+  });
+
 
     try {
       setLoading(true);
