@@ -1,21 +1,17 @@
+# .github/workflows/test.yml
 name: Run backend Jest tests
 
 on:
   push:
     branches: [ main, haoyun ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/test.yml'
+    paths: [ 'backend/**', '.github/workflows/test.yml' ]
   pull_request:
     branches: [ main ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/test.yml'
+    paths: [ 'backend/**', '.github/workflows/test.yml' ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: backend
@@ -31,17 +27,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - name: Install dependencies (use npm ci if lockfile exists)
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-
+      - name: Install dependencies
+        run: npm install
 
       - name: Run tests
         env:
           NODE_ENV: test
-          REAL_OCR: 0
         run: npm test
