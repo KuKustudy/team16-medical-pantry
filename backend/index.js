@@ -82,7 +82,6 @@ app.get("/api", async (req, res) => {
     } else {
         data = { message: "No GTIN or Product Name" };
     }
-    await mongoInsert("hi");
     // pulling out the values for UI
     let results = data.results
     for (let i = 0; i < results.length; i++){
@@ -96,7 +95,6 @@ app.get("/api", async (req, res) => {
         result_list.push([name, gtin, action, start_date, product_type, hazard_class, data_source])
         
     }
-    await mongoInsert();
     res.json(data);
 
     // removing duplicates
@@ -320,8 +318,9 @@ app.post("/mongoSearch", async (req, res) => {
   }
 })
 
-async function mongoInsert(medical_data) {
+app.post("/mongoInsert", async (req, res) => {
 
+    const medical_data = req.body;
     await console.log("inserting ", medical_data);
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -340,6 +339,6 @@ async function mongoInsert(medical_data) {
     // Ensures that the client will close when you finish/error
     await client.close();
   }
-}
+})
 
 export default app;
