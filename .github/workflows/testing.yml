@@ -5,12 +5,12 @@ on:
     branches:
       - DevBranch
     paths:
-      - 'frontend/**'   # currently only trigger when frontend files change
+      - 'Frontend/**'   # currently only trigger when frontend files change
   push:
     branches:
       - DevBranch
     paths:
-      - 'frontend/**'
+      - 'Frontend/**'
 
 jobs:
   tests:
