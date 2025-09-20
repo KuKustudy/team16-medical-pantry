@@ -38,14 +38,6 @@ Database: MongoDB
     5. backend server is running on 8080 port now, go to localhost:8080/api to test it out
 
 
-## how to test frontend:
-
-    1. go to frontend directory
-
-    2. open terminal
-
-    3. enter command: npm run test
-
 ## Reference links:
 
 FDA: Food & Drug Administration, an United State organisation, their website 
@@ -56,8 +48,6 @@ website can be accessed on https://www.tga.gov.au/
 
 HOW to set up test using Vitest: https://victorbruce82.medium.com/vitest-with-react-testing-library-in-react-created-with-vite-3552f0a9a19a
 
-HOW to automatically test your code using GitHub Action: 
-https://www.youtube.com/watch?v=JUKZVlIDrtY
 
 
 
