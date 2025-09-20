@@ -1,0 +1,40 @@
+name: Frontend Unit Tests with Vitest
+
+on:   
+  pull_request:
+    branches:
+      - DevBranch
+    paths:
+      - 'frontend/**'   # currently only trigger when frontend files change
+  push:
+    branches:
+      - DevBranch
+    paths:
+      - 'frontend/**'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version}}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version}}
+      
+      # install dependencies inside frontend
+      - name: install dependencies
+        run: |
+          cd Frontend
+          npm ci
+
+      # run Vitest tests inside frontend
+      - name: run Frontend tests
+        run: |
+          cd Frontend
+          npm test
