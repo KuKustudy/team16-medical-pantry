@@ -15,11 +15,13 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "multer": "^2.0.2",
     "mongodb": "^6.19.0",
+    "multer": "^2.0.2",
     "node-easyocr": "^1.0.9"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
   }
 }
