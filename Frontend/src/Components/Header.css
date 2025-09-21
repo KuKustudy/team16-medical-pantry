@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+.header {
+  width: 100%;
+  background-color: #141a43;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  left: 0;
+  /*  
+  position: fixed;
+  top: 0; 
+  */         
+}
+.header-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.navbar-brand-logo {
+  width: max-content;
+  height: 8.2rem;
+  object-fit: contain;
+}

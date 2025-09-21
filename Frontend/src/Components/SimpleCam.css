@@ -1,0 +1,30 @@
+.simplecam-container {
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.simplecam-btn {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background-color: #141a43;
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.simplecam-btn:hover {
+  background-color: #1f2870; 
+}
+
+.simplecam-btn:active {
+  transform: scale(0.97);
+}
+
+.simplecam-preview {
+  margin-top: 16px;
+  max-width: 100%;
+}
