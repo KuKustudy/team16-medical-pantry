@@ -25,7 +25,7 @@ import { stringify } from "node:querystring";
 const app = express();
 const ocr = new EasyOCR();
 // const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr.mongodb.net/?retryWrites=true&w=majority&appName=Medical-Data";
+const uri = "mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr.mongodb.net/?retryWrites=true&w=majority&appName=Medical-Data?directConnection=true";
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -274,18 +274,37 @@ app.post("/mongoSearch", async (req, res) => {
 
     // convert medical_data object into mongo search
     let should = []
-    for (var key in medical_data){
-        if (medical_data.hasOwnProperty(key) && 
-            String(medical_data[key]) != '') {
-            await should.push({
-                text: {
-                    query: String(medical_data[key]),
-                    path: String(key),
-                    fuzzy: { maxEdits: 2 }
-                }
-            })
+    const { name, GTIN, lot_number } = req.body;
+    if (name && name.trim() !== "") {
+      should.push({
+        text: {
+          query: name,
+          path: "name",
+          fuzzy: { maxEdits: 2 }
         }
+      });
     }
+
+    
+    if (GTIN && GTIN.trim() !== "") {
+        should.push({
+        text: {
+            query: GTIN,
+            path: "GTIN",
+        }
+        });
+    };
+    
+
+        if (lot_number && lot_number.trim() !== "") {
+        should.push({
+        text: {
+            query: lot_number,
+            path: "lot_number",
+        }
+        });
+    };
+
 
     const pipeline = [
         {
@@ -301,11 +320,17 @@ app.post("/mongoSearch", async (req, res) => {
             $project: {
             name: 1,
             GTIN: 1,
-            batch_number: 1,
             lot_number: 1,
+            action: 1, 
+            start_date: 1, 
+            product_type: 1, 
+            hazard_class: 1, 
+            lot_num: 1,
+            source: 1,
             score: { $meta: "searchScore" } 
             }
-        }
+        },
+        { $limit: 10}
     ]
 
     const result = await collection.aggregate(pipeline).toArray();
