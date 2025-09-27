@@ -146,3 +146,67 @@ test("silence logs on demand", async () => {
   expect(res.status).toBe(200);
   spy.mockRestore();
 });
+
+test("POST /imagescan returns multiple texts correctly joined", async () => {
+  const app = await loadAppWithMock({
+    readText: async () => [
+      { text: "Hello", confidence: 0.95 },
+      { text: "World", confidence: 0.85 }
+    ]
+  });
+
+  const res = await request(app)
+    .post("/imagescan")
+    .send({ imagePath: "multi.png" })
+    .set("Content-Type", "application/json");
+
+  expect(res.status).toBe(200);
+  expect(res.body.data.length).toBe(2);
+  const joined = res.body.data.map(x => x.text).join(" ");
+  expect(joined).toContain("Hello");
+  expect(joined).toContain("World");
+});
+
+test("POST /imagescan handles result without confidence", async () => {
+  const app = await loadAppWithMock({
+    readText: async () => [{ text: "NoConf" }]
+  });
+
+  const res = await request(app)
+    .post("/imagescan")
+    .send({ imagePath: "noconf.png" })
+    .set("Content-Type", "application/json");
+
+  expect(res.status).toBe(200);
+  expect(res.body.success).toBe(true);
+  expect(res.body.data[0].confidence).toBeUndefined();
+});
+
+test("POST /imagescan preserves bbox field", async () => {
+  const mockBBox = [10, 20, 30, 40];
+  const app = await loadAppWithMock({
+    readText: async () => [{ text: "BBox", confidence: 0.9, bbox: mockBBox }]
+  });
+
+  const res = await request(app)
+    .post("/imagescan")
+    .send({ imagePath: "bbox.png" })
+    .set("Content-Type", "application/json");
+
+  expect(res.status).toBe(200);
+  expect(res.body.data[0].bbox).toEqual(mockBBox);
+});
+
+test("POST /imagescan with empty imagePath should return 400", async () => {
+  const app = await loadAppWithMock({
+    readText: async () => []
+  });
+
+  const res = await request(app)
+    .post("/imagescan")
+    .send({ imagePath: "" })
+    .set("Content-Type", "application/json");
+
+  expect(res.status).toBe(400);
+  expect(res.body.success).toBe(false);
+});
