@@ -26,13 +26,13 @@ export default function MedicalInput({ initialItemName = "" }) {
     ];
 
     // Guard against undefined, then normalize
-    const name  = (query.Name ?? "").trim().toLowerCase();
+    const ItemName  = (query.ItemName ?? "").trim().toLowerCase();
     const gtin  = (query.GTIN_num ?? "").trim();
     const batch = (query.Batch_num ?? "").trim().toLowerCase();
     const lot   = (query.Lot_num ?? "").trim().toLowerCase();
 
     return MOCK_DB.filter(item => {
-      const nameOK  = !name  || item.Name.toLowerCase().includes(name);
+      const nameOK  = !ItemName  || item.Name.toLowerCase().includes(ItemName);
       const gtinOK  = !gtin  || item.GTIN_num === gtin;
       const batchOK = !batch || (item.Batch_num?.toLowerCase() === batch);
       const lotOK   = !lot   || (item.Lot_num?.toLowerCase() === lot);
@@ -54,7 +54,7 @@ export default function MedicalInput({ initialItemName = "" }) {
   }
 
   const query = {
-  name: ItemName || "",
+  ItemName: ItemName || "",
   GTIN_num: GTIN_num || "",
   batch_number: BatchNumber || "",
   lot_number: LotNumber || ""
