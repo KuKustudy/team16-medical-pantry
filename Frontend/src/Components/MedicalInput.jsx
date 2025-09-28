@@ -42,8 +42,6 @@ export default function MedicalInput({ initialItemName = "" }) {
 
  
 
-
-
   async function handleSearchItem() {
     setError("");
 
