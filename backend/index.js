@@ -18,14 +18,18 @@ import cors from "cors";
 import multer from "multer";
 import fs from "fs";  
 import {MongoClient, ServerApiVersion} from 'mongodb';
+import dotenv from "dotenv";
 import { log } from "node:console";
 import { stringify } from "node:querystring";
 
 // create new app and easyOCR instance
 const app = express();
 const ocr = new EasyOCR();
+
 // const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr.mongodb.net/?retryWrites=true&w=majority&appName=Medical-Data";
+dotenv.config();
+const uri = process.env.DATABASE_URL;
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
