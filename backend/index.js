@@ -79,7 +79,6 @@ app.get("/api", async (req, res) => {
     }
         
     // pulling out the values for UI
-
     var results;
     if (device_data){
         results = device_data.results
@@ -87,6 +86,8 @@ app.get("/api", async (req, res) => {
         results = drug_data.results
     }
 
+
+    // push results based on product type
     if (device_data){
         for (let i = 0; i < results.length; i++){
             var name = device_data.results[i].openfda.device_name;
@@ -113,17 +114,6 @@ app.get("/api", async (req, res) => {
         }
     }
 
-    /* 
-    name
-    code_info
-    action
-    data_source
-    device_recalls_api='https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"'
-    device_name_query = '+AND+device_name:"'
-
-    example device name = Surveying Laser Product
-    */
-
     // removing duplicates
     let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
     
@@ -135,6 +125,7 @@ app.get("/api", async (req, res) => {
   }
 });
 
+// function for fda drug queries
 async function fda_drug_recalls(name, gtin){
     const drug_recalls_api = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
     const name_query ='+AND+openfda.generic_name:"';
@@ -158,6 +149,7 @@ async function fda_drug_recalls(name, gtin){
     return data;
 }
 
+// function for fda device queries
 async function fda_device_recalls(name){
     const device_recalls_api = 'https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"';
     const name_query ='+AND+openfda.device_name:"';
@@ -169,7 +161,7 @@ async function fda_device_recalls(name){
         data = await fda_response.json()
         
     } else {
-        data = { message: "No GTIN or Product Name" };
+        data = { message: "No Product Name" };
     }
 
     return data;
