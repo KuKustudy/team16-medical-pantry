@@ -53,13 +53,7 @@ await ocr.init(['en']);
 
 
 // variables used to query the FDA API
-const product_name = ""; // insert product name here
-const gtin_for_query = "0368001578592"; // insert gtin here sample: 0368001578592
-const base_api_url = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
-const product_name_query =
-  '+AND+openfda.generic_name:"';
-const gtin_query = '+AND+openfda.upc:"';
-const limit_query = '"&limit=10'
+
 const result_list = [];
 
 
@@ -73,33 +67,62 @@ const result_list = [];
 app.get("/api", async (req, res) => {
   try {
     // queries api using GTIN first and name if no GTIN is entered
-    let data;
-    if (gtin_for_query !== "") {
-        var converted_gtin = gtin_converter(gtin_for_query);
-        const fda_response = await fetch(base_api_url + gtin_query + converted_gtin + limit_query);
-        data = await fda_response.json()
+    var data;
+    var drug_data;
+    var device_data;
+    const product_name = "Surveying Laser Product"; // insert product name here sample: Surveying Laser Product
+    const product_gtin = ""; // insert gtin here sample: 0368001578592
 
-    } else if (product_name !== "") {
-        fda_response = await fetch(base_api_url + product_name_query + product_name + limit_query);
-        data = await fda_response.json()
-        
-    } else {
-        data = { message: "No GTIN or Product Name" };
+    drug_data = await fda_drug_recalls(product_name, product_gtin);
+    if (drug_data.error && drug_data.error.code == "NOT_FOUND") {
+        device_data = await fda_device_recalls(product_name);
     }
+        
     // pulling out the values for UI
-    let results = data.results
-    for (let i = 0; i < results.length; i++){
-        var name = data.results[i].openfda.generic_name;
-        var gtin = data.results[i].openfda.upc;
-        var action = "Recall";
-        var start_date = data.results[i].recall_initiation_date;
-        var product_type = data.results[i].product_type;
-        var hazard_class = data.results[i].classification;
-        var data_source = "https://api.fda.gov/drug/enforcement.json"
-        result_list.push([name, gtin, action, start_date, product_type, hazard_class, data_source])
-        
+
+    var results;
+    if (device_data){
+        results = device_data.results
+    } else {
+        results = drug_data.results
     }
-    res.json(data);
+
+    if (device_data){
+        for (let i = 0; i < results.length; i++){
+            var name = device_data.results[i].openfda.device_name;
+            var action = "Recall";
+            var lot_number = device_data.results[i].code_info;
+            var data_source = "https://api.fda.gov/device/recall.json";
+
+            var start_date = device_data.results[i].event_date_initiated;
+            result_list.push([name, action, lot_number, start_date, data_source])    
+        }
+    } else {
+        for (let i = 0; i < results.length; i++){
+            var name = drug_data.results[i].openfda.generic_name;
+            var gtin = drug_data.results[i].openfda.upc;
+            var action = "Recall";
+            var lot_number = drug_data.results[i].code_info;
+            var data_source = "https://api.fda.gov/drug/enforcement.json";
+
+            var start_date = drug_data.results[i].recall_initiation_date;
+            var product_type = drug_data.results[i].product_type;
+            var hazard_class = drug_data.results[i].classification;
+            result_list.push([name, gtin, action, lot_number, start_date, product_type, hazard_class, data_source])
+        
+        }
+    }
+
+    /* 
+    name
+    code_info
+    action
+    data_source
+    device_recalls_api='https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"'
+    device_name_query = '+AND+device_name:"'
+
+    example device name = Surveying Laser Product
+    */
 
     // removing duplicates
     let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
@@ -111,6 +134,46 @@ app.get("/api", async (req, res) => {
     res.status(500).send("Error fetching FDA data");
   }
 });
+
+async function fda_drug_recalls(name, gtin){
+    const drug_recalls_api = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
+    const name_query ='+AND+openfda.generic_name:"';
+    const gtin_query = '+AND+openfda.upc:"';
+    const limit_query = '"&limit=10'
+
+    let data;
+    if (gtin !== "") {
+        var converted_gtin = gtin_converter(gtin);
+        const fda_response = await fetch(drug_recalls_api + gtin_query + converted_gtin + limit_query);
+        data = await fda_response.json()
+
+    } else if (name !== "") {
+        const fda_response = await fetch(drug_recalls_api + name_query + name + limit_query);
+        data = await fda_response.json()
+        
+    } else {
+        data = { message: "No GTIN or Product Name" };
+    }
+
+    return data;
+}
+
+async function fda_device_recalls(name){
+    const device_recalls_api = 'https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"';
+    const name_query ='+AND+openfda.device_name:"';
+    const limit_query = '"&limit=10'
+
+    let data;
+    if (name !== "") {
+        const fda_response = await fetch(device_recalls_api + name_query + name + limit_query);
+        data = await fda_response.json()
+        
+    } else {
+        data = { message: "No GTIN or Product Name" };
+    }
+
+    return data;
+}
 
 // function to convert GTIN 14 to GTIN 13
 function gtin_converter(gtin14){
