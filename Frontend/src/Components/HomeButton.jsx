@@ -18,7 +18,7 @@ export default function HomeButtons() {
           onClick={() => navigate("/ScanPage")}
         >
           <span className="home-btn__icon" aria-hidden>🔎</span>
-          <span>Scan</span>
+          <span>SCAN</span>
         </button>
 
         <button

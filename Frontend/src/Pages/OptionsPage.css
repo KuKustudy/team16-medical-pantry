@@ -2,9 +2,7 @@
 .List-Of-Options{
   font-family: Poppins, Arial, sans-serif;
   text-align: center;
-  margin-top: 30px;
 
-  /* layout for sticky header + scrollable content + sticky footer */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -22,7 +20,7 @@ h1{ font-size: 2rem; }
   position: sticky;
   top: 0;
   z-index: 1000;
-  /* subtle separation and solid bg */
+
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   background: linear-gradient(to bottom, #ffffff 98%, rgba(255,255,255,0));
 }

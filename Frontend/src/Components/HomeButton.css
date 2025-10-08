@@ -6,7 +6,6 @@
   font-family: Arial, sans-serif;
 }
 
-/* subtitle under the header banner */
 .home-subtitle {
   margin: 24px 0 26px;
   color: #1a1a1a;
@@ -14,7 +13,6 @@
   line-height: 1.35;
 }
 
-/* stack buttons with space between */
 .home-actions {
   display: flex;
   flex-direction: column;
@@ -22,7 +20,7 @@
   gap: 16px;
 }
 
-/* strong, page-scoped button base (avoid global conflicts) */
+
 .home-buttons .home-btn {
   appearance: none;
   border: 2px solid transparent;
@@ -40,14 +38,14 @@
 
 .home-buttons .home-btn:hover { filter: brightness(0.98); }
 
-/* specific variants to match your mock */
+
 .home-buttons .home-btn--scan {
-  background: #c43d37;   /* red pill */
+  background: #c43d37; 
   border-color: #9f2c27;
 }
 
 .home-buttons .home-btn--confirm {
-  background: #54575c;   /* grey pill */
+  background: #54575c; 
   border-color: #3c3f43;
 }
 
