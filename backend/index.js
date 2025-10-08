@@ -2,12 +2,25 @@
 // then the backend will be run in localhost:8080
 
 /* 
-Medical data format
+Medical data format for a search
 let medical_data = {
 GTIN: "number",
 name: "drug name,"
-batch_number: "batch_num",
 lot_number: "lot_num",
+}
+*/
+
+/* 
+Medical data format for database
+let medical_data = {
+GTIN: ["number"],
+name: "drug name,"
+lot_number: ["lot_num"],
+start_date: date, 
+product_type: "type", 
+hazard_class: "class", 
+source: "FDA",
+description: "string",
 }
 
 */
@@ -18,6 +31,7 @@ import cors from "cors";
 import multer from "multer";
 import fs from "fs";  
 import {MongoClient, ServerApiVersion} from 'mongodb';
+import dotenv from "dotenv";
 import { log } from "node:console";
 import { stringify } from "node:querystring";
 
@@ -25,7 +39,7 @@ import { stringify } from "node:querystring";
 const app = express();
 const ocr = new EasyOCR();
 // const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://jesssin_db_user:PrPpU2xltmLPwNr2@medical-data.3tzehjr.mongodb.net/?retryWrites=true&w=majority&appName=Medical-Data?directConnection=true";
+const uri = process.env.DATABASE_URL;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -259,10 +273,18 @@ app.listen(8080, () => {
 
 //mongodb database access
 app.use(express.json());
-app.post("/mongoSearch", async (req, res) => {
-    console.log(req.body); 
-  try {
-    const medical_data = req.body;
+app.post("/search", async (req, res) => {
+    try {
+        const result = await mongo_search(req.body);  // Await the async function
+        res.json(result);  // Send the resolved result
+    } catch (error) {
+        console.error("Search error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+async function mongo_search(medical_data) {
+    try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect()
     // Send a ping to confirm a successful connection
@@ -274,7 +296,7 @@ app.post("/mongoSearch", async (req, res) => {
 
     // convert medical_data object into mongo search
     let should = []
-    const { name, GTIN, lot_number } = req.body;
+    const { name, GTIN, lot_number } = medical_data;
     if (name && name.trim() !== "") {
       should.push({
         text: {
@@ -327,6 +349,7 @@ app.post("/mongoSearch", async (req, res) => {
             hazard_class: 1, 
             lot_num: 1,
             source: 1,
+            description: 1,
             score: { $meta: "searchScore" } 
             }
         },
@@ -335,17 +358,15 @@ app.post("/mongoSearch", async (req, res) => {
 
     const result = await collection.aggregate(pipeline).toArray();
     console.log(result);
-    res.json(result);
+    return result;
  
   } finally {
     // Ensures that the client will close when you finish/error
     await client.close();
   }
-})
+}
 
-app.post("/mongoInsert", async (req, res) => {
-
-    const medical_data = req.body;
+async function mongo_insert(medical_data) {
     await console.log("inserting ", medical_data);
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -364,6 +385,6 @@ app.post("/mongoInsert", async (req, res) => {
     // Ensures that the client will close when you finish/error
     await client.close();
   }
-})
+}
 
 export default app;

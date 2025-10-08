@@ -59,7 +59,7 @@ export default function MedicalInput() {
   lot_number: LotNumber || ""
   };
 
-  fetch("http://localhost:8080/mongoSearch", {
+  fetch("http://localhost:8080/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(query)
