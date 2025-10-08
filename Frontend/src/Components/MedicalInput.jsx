@@ -18,12 +18,14 @@ export default function MedicalInput({ initialItemName = "" }) {
 
   //Delete if no need for mockDB
   async function searchMedicalItem(query) {
+
     const MOCK_DB = [
-      { Name: "Paracetamol", GTIN_num: "09345678901234", Batch_num: "B123", Lot_num: "L001", recalled: true },
-      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Batch_num: "B777", Lot_num: "L222", recalled: true },
-      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Batch_num: "B111", Lot_num: "L111", recalled: false },
-      { Name: "Cetrizine",   GTIN_num: "00999999999999", Batch_num: "B123", Lot_num: "L003", recalled: false },
+      { Name: "Paracetamol", GTIN_num: "09345678901234", Batch_num: "B123", Lot_num: "L001" },
+      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Batch_num: "B777", Lot_num: "L222" },
+      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Batch_num: "B111", Lot_num: "L111" },
+      { Name: "Cetrizine",   GTIN_num: "00999999999999", Batch_num: "B123", Lot_num: "L003" },
     ];
+
 
     // Guard against undefined, then normalize
     const ItemName  = (query.ItemName ?? "").trim().toLowerCase();
@@ -115,11 +117,7 @@ export default function MedicalInput({ initialItemName = "" }) {
   }
 
   return (
-    <div style={{ 
-      maxWidth: 520, 
-      margin: "10px auto", 
-      fontFamily: "Arial, sans-serif",
-      }}>
+    <div className= "page">
 
       <h2>Medical Item Search</h2>
 
