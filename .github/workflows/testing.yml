@@ -4,16 +4,18 @@ on:
   pull_request:
     branches:
       - DevBranch
+      - main
     paths:
       - 'Frontend/**'   # currently only trigger when frontend files change
   push:
     branches:
       - DevBranch
+      - main
     paths:
       - 'Frontend/**'
 
 jobs:
-  tests:
+  frontend-tests:
     runs-on: ubuntu-latest
 
     strategy:
@@ -22,10 +24,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version}}
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
-          node-version: ${{ matrix.node-version}}
+          node-version: ${{ matrix.node-version }}
       
       # install dependencies inside frontend
       - name: install dependencies
