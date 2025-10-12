@@ -1,4 +1,4 @@
-// how to run it: cd to backend folder, and in your terminal, enter: npm run dev
+// how to run it: cd to backend folder, and in your terminal, enter: "&limit=10npm run dev
 // then the backend will be run in localhost:8080
 
 /* 
@@ -54,7 +54,7 @@ await ocr.init(['en']);
 
 // variables used to query the FDA API
 
-const result_list = [];
+
 
 
 /*
@@ -66,58 +66,7 @@ const result_list = [];
 */
 app.get("/api", async (req, res) => {
   try {
-    // queries api using GTIN first and name if no GTIN is entered
-    var data;
-    var drug_data;
-    var device_data;
-    const product_name = "Surveying Laser Product"; // insert product name here sample: Surveying Laser Product
-    const product_gtin = ""; // insert gtin here sample: 0368001578592
-
-    drug_data = await fda_drug_recalls(product_name, product_gtin);
-    if (drug_data.error && drug_data.error.code == "NOT_FOUND") {
-        device_data = await fda_device_recalls(product_name);
-    }
-        
-    // pulling out the values for UI
-    var results;
-    if (device_data){
-        results = device_data.results
-    } else {
-        results = drug_data.results
-    }
-
-
-    // push results based on product type
-    if (device_data){
-        for (let i = 0; i < results.length; i++){
-            var name = device_data.results[i].openfda.device_name;
-            var action = "Recall";
-            var lot_number = device_data.results[i].code_info;
-            var data_source = "https://api.fda.gov/device/recall.json";
-
-            var start_date = device_data.results[i].event_date_initiated;
-            result_list.push([name, action, lot_number, start_date, data_source])    
-        }
-    } else {
-        for (let i = 0; i < results.length; i++){
-            var name = drug_data.results[i].openfda.generic_name;
-            var gtin = drug_data.results[i].openfda.upc;
-            var action = "Recall";
-            var lot_number = drug_data.results[i].code_info;
-            var data_source = "https://api.fda.gov/drug/enforcement.json";
-
-            var start_date = drug_data.results[i].recall_initiation_date;
-            var product_type = drug_data.results[i].product_type;
-            var hazard_class = drug_data.results[i].classification;
-            result_list.push([name, gtin, action, lot_number, start_date, product_type, hazard_class, data_source])
-        
-        }
-    }
-
-    // removing duplicates
-    let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
-    
-    res.json(unique_result);
+    res.json(await FDA_API_calls("", "0368001578592"))
 
   } catch (fetch_error) {
     console.error(fetch_error);
@@ -125,21 +74,82 @@ app.get("/api", async (req, res) => {
   }
 });
 
+async function FDA_API_calls(product_name, product_gtin){
+
+    // const product_name = "Surveying Laser Product"; // insert product name here sample: Surveying Laser Product
+    // const product_gtin = ""; // insert gtin here sample: 0368001578592
+        
+    try {
+        // queries api using GTIN first and name if no GTIN is entered
+        var drug_data;
+        var device_data;
+        var result_list = [];
+        
+        drug_data = await fda_drug_recalls(product_name, product_gtin);
+        if (drug_data.error && drug_data.error.code == "NOT_FOUND") {
+            device_data = await fda_device_recalls(product_name);
+        }
+            
+        // pulling out the values for UI
+        var results;
+        if (device_data){
+            results = device_data.results
+        } else {
+            results = drug_data.results
+        }
+
+        // push results based on product type
+        if (device_data){
+            for (let i = 0; i < results.length; i++){
+                var name = device_data.results[i].openfda.device_name;
+                var action = "Recall";
+                var lot_number = device_data.results[i].code_info;
+                var data_source = "https://api.fda.gov/device/recall.json";
+
+                var start_date = device_data.results[i].event_date_initiated;
+                result_list.push([name, action, lot_number, start_date, data_source])    
+            }
+        } else {
+            for (let i = 0; i < results.length; i++){
+                var name = drug_data.results[i].openfda.generic_name;
+                var gtin = drug_data.results[i].openfda.upc;
+                var action = "Recall";
+                var lot_number = drug_data.results[i].code_info;
+                var data_source = "https://api.fda.gov/drug/enforcement.json";
+
+                var start_date = drug_data.results[i].recall_initiation_date;
+                var product_type = drug_data.results[i].product_type;
+                var hazard_class = drug_data.results[i].classification;
+                result_list.push([name, gtin, action, lot_number, start_date, product_type, hazard_class, data_source])
+            
+            }
+        }
+
+        // removing duplicates
+        let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
+        return unique_result;
+        
+
+    } catch (fetch_error) {
+        console.error(fetch_error);
+        return "Error fetching FDA data";
+    }
+
+}
+
 // function for fda drug queries
 async function fda_drug_recalls(name, gtin){
-    const drug_recalls_api = 'https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"';
-    const name_query ='+AND+openfda.generic_name:"';
-    const gtin_query = '+AND+openfda.upc:"';
-    const limit_query = '"&limit=10'
+    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.generic_name:"${name}"&limit=10`
+    const gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${gtin}"&limit=10`
 
     let data;
     if (gtin !== "") {
         var converted_gtin = gtin_converter(gtin);
-        const fda_response = await fetch(drug_recalls_api + gtin_query + converted_gtin + limit_query);
+        const fda_response = await fetch(gtin_query);
         data = await fda_response.json()
 
     } else if (name !== "") {
-        const fda_response = await fetch(drug_recalls_api + name_query + name + limit_query);
+        const fda_response = await fetch(name_query);
         data = await fda_response.json()
         
     } else {
@@ -151,13 +161,10 @@ async function fda_drug_recalls(name, gtin){
 
 // function for fda device queries
 async function fda_device_recalls(name){
-    const device_recalls_api = 'https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"';
-    const name_query ='+AND+openfda.device_name:"';
-    const limit_query = '"&limit=10'
-
     let data;
+    var search_query = `https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"+AND+openfda.device_name:"${name}"&limit=10`
     if (name !== "") {
-        const fda_response = await fetch(device_recalls_api + name_query + name + limit_query);
+        const fda_response = await fetch(search_query);
         data = await fda_response.json()
         
     } else {
