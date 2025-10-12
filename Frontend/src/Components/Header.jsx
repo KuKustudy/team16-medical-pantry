@@ -1,6 +1,8 @@
 import "./Header.css";
 import { Link } from "react-router-dom";
 import MedicalPantryLogo from "../assets/MedicalPantryLogo.png";
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+
 
 export function Header() {
   return (
@@ -12,6 +14,14 @@ export function Header() {
           alt="Medical Pantry Logo"
         />
       </Link>
+
+      <SignedOut>
+        <SignInButton />
+      </SignedOut>
+      <SignedIn>
+        <UserButton />
+      </SignedIn>
+      
     </header>
   );
 }
