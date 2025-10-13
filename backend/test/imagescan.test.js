@@ -3,17 +3,28 @@ import request from "supertest";
 
 async function loadAppWithMock(mockImpl) {
   process.env.NODE_ENV = "test";
+  process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/dummy";
   jest.resetModules();
 
   jest.unstable_mockModule("node-easyocr", () => {
     class MockEasyOCR {
       async init() {}
-      async readText(...args) {
-        return await mockImpl.readText(...args);
-      }
+      async readText(...args) { return await mockImpl.readText(...args); }
       async close() {}
     }
     return { __esModule: true, default: MockEasyOCR, EasyOCR: MockEasyOCR };
+  });
+
+  jest.unstable_mockModule("mongodb", () => {
+    class MockCollection { aggregate() { return { toArray: async () => [] }; } }
+    class MockDb { command = async () => ({ ok: 1 }); collection = () => new MockCollection(); }
+    class MockMongoClient {
+      constructor() {}
+      async connect() {}
+      db() { return new MockDb(); }
+      async close() {}
+    }
+    return { __esModule: true, MongoClient: MockMongoClient, ServerApiVersion: { v1: "v1" } };
   });
 
   const { default: app } = await import("../index.js");
@@ -33,6 +44,17 @@ async function loadAppWithGs1Mock(gs1Text) {
       async close() {}
     }
     return { __esModule: true, default: MockEasyOCR, EasyOCR: MockEasyOCR };
+  });
+  
+  jest.unstable_mockModule("mongodb", () => {
+    class MockCollection { aggregate() { return { toArray: async () => [] }; } }
+    class MockDb { command = async () => ({ ok: 1 }); collection = () => new MockCollection(); }
+    class MockMongoClient {
+      async connect() {}
+      db() { return new MockDb(); }
+      async close() {}
+    }
+    return { __esModule: true, MongoClient: MockMongoClient, ServerApiVersion: { v1: "v1" } };
   });
 
   const { default: app } = await import("../index.js");
