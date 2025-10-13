@@ -5,13 +5,13 @@ on:
     branches: [ DevBranch, main ]
     paths:
       - 'Frontend/**'
-      - 'Backend/**'
+      - 'backend/**'
       - '.github/workflows/**'
   pull_request:
     branches: [ DevBranch, main ]
     paths:
       - 'Frontend/**'
-      - 'Backend/**'
+      - 'backend/**'
       - '.github/workflows/**'
 
 jobs:
@@ -52,9 +52,9 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install deps
-        working-directory: Backend
+        working-directory: backend
         run: npm ci
 
       - name: Run tests
-        working-directory: Backend
+        working-directory: backend
         run: npm test
