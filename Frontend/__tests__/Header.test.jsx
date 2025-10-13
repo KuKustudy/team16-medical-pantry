@@ -11,33 +11,39 @@ import { render, screen } from '@testing-library/react'
   - the link to homepage
   - the medical pantry logo
 */
-describe('render the Header component', () => {
-  it('renders the Header component', () => {
-    render(    
-    <MemoryRouter>
-      <Header />
-    </MemoryRouter>
+describe('Header component', () => {
+
+  it('renders the Header with logo and link', () => {
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
     );
-    
-    // Verify the header element is rendered
-    const headerElement = screen.getByRole('banner');
-    expect(headerElement).toBeInTheDocument();
-    
-    // Verify the logo image is rendered with correct alt text
-    const logoImage = screen.getByAltText('Medical Pantry Logo');
-    expect(logoImage).toBeInTheDocument();
-    
-    // Verify the link is present
+    const header = screen.getByRole('banner');
+    const logo = screen.getByAltText('Medical Pantry Logo');
     const link = screen.getByRole('link');
+    expect(header).toBeInTheDocument();
+    expect(logo).toBeInTheDocument();
     expect(link).toBeInTheDocument();
+  });
 
-    screen.debug(); // prints out the jsx on command line
-  })
-})
+  it('logo image has correct alt text', () => {
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+    const logo = screen.getByAltText(/medical pantry logo/i);
+    expect(logo).toBeTruthy();
+  });
 
-// a template for writing tests
-// describe('A truthy statement', () => {
-//   it('should be equal to 2', () => {
-//     expect(1+1).toEqual(2)
-//   })
-// })
+  it('renders navigation links correctly', () => {
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+    const links = screen.getAllByRole('link');
+    expect(links.length).toBeGreaterThanOrEqual(1);
+  });
+});
