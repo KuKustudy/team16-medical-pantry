@@ -1,35 +1,62 @@
 import { describe, it, expect } from 'vitest'
+import { render, screen, fireEvent } from "@testing-library/react";
 import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import SimpleCam from '../src/Components/SimpleCam'; // Use curly braces for named import
-import { MemoryRouter } from "react-router-dom";
-import { render, screen } from '@testing-library/react'
+import { BrowserRouter, MemoryRouter, Routes, Route } from "react-router-dom";
 
-describe('render the SimpleCam', () => {
-  it('verify that the camera and button have been rendered', () => {
-    render(    
-    <SimpleCam />
+HTMLCanvasElement.prototype.getContext = () => ({
+  drawImage: vi.fn(),
+});
+HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/png;base64,AAAA');
+
+vi.mock('react-webcam', () => ({
+  __esModule: true,
+  default: React.forwardRef((props, ref) => {
+    React.useImperativeHandle(ref, () => ({
+      video: document.createElement('video'),
+      getScreenshot: () => 'data:image/png;base64,FAKE',
+    }));
+    return <video data-testid="webcam" />;
+  }),
+}));
+
+describe('SimpleCam component', () => {
+
+  it('renders webcam and capture button', () => {
+    render(
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<SimpleCam />} />
+        </Routes>
+      </BrowserRouter>
     );
-    
-    // Verify the camera element is rendered
-    const webcamElement = screen.getByTestId("webcam");
-    expect(webcamElement).toBeInTheDocument();
-    
-    // Verify the capture button is present
-    const captureButton = screen.getByRole('button');
-    expect(captureButton).toBeInTheDocument();
+    expect(screen.getByTestId("webcam")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /capture/i })).toBeInTheDocument();
+  });
 
-    screen.debug(); // prints out the jsx on command line
-  })
-})
-
-// still need to work out how to mock a webcam in vitest...
-describe('testing the capture button', () => {
-  it('verify that the camera and button have been rendered', () => {
-    render(    
-    <SimpleCam />
+  it('clicking the capture button does not crash', () => {
+    render(
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<SimpleCam />} />
+        </Routes>
+      </BrowserRouter>
     );
+    const button = screen.getByRole("button", { name: /capture/i });
+    fireEvent.click(button);
+    expect(button).toBeEnabled();
+  });
 
-    screen.debug(); // prints out the jsx on command line
-  })
-})
+  it('renders consistent layout', () => {
+    render(
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<SimpleCam />} />
+        </Routes>
+      </BrowserRouter>
+    );
+    const container = document.querySelector(".simplecam-container");
+    expect(container).toBeInTheDocument();
+  });
+});
