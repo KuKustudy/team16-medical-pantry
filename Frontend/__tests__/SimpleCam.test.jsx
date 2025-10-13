@@ -4,7 +4,16 @@ import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import SimpleCam from '../src/Components/SimpleCam'; // Use curly braces for named import
 import { BrowserRouter, MemoryRouter, Routes, Route } from "react-router-dom";
-import { render, screen } from '@testing-library/react'
+
+vi.mock("react-webcam", () => ({
+  default: () => <video data-testid="webcam" />
+}));
+
+beforeAll(() => {
+  HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
+    drawImage: vi.fn(),
+  }));
+});
 
 describe('render the SimpleCam', () => {
   it('verify that the camera and button have been rendered', () => {
@@ -25,8 +34,9 @@ describe('render the SimpleCam', () => {
     const captureButton = screen.getByRole('button');
     expect(captureButton).toBeInTheDocument();
 
-
-describe('SimpleCam component', () => {
+    screen.debug(); // prints out the jsx on command line
+  })
+})
 
 
 // still need to work out how to mock a webcam in vitest...
