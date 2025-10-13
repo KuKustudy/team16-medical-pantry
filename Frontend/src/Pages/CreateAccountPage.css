@@ -1,0 +1,107 @@
+/* ===== Create Account page layout ===== */
+.CreateAccountPage {
+  font-family: Poppins, Arial, sans-serif;
+}
+
+.auth-page {
+  /* center the form and give everything the same left/right edges */
+  max-width: 560px;        /* tweak to taste */
+  margin: 12px auto 48px;
+  padding: 0 10px;
+  text-align: center;
+}
+
+.auth-title {
+  font-size: 2rem;
+  margin: 16px 0 24px;
+}
+
+/* ===== Form ===== */
+.auth-card {
+  display: block;          /* single column */
+  width: 100%;
+}
+
+/* Label + input stack; labels align with inputs automatically */
+.auth-field {
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.auth-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+  margin-top: 8px;
+}
+
+/* One size fits all */
+:root {
+  --control-h: 56px;       /* control height for inputs & button */
+  --radius: 5px;
+}
+
+/* Inputs: same width & height */
+.auth-input {
+  display: block;
+  width: 100%;
+  height: var(--control-h);
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 2px solid #e6e6e9;
+  border-radius: var(--radius);
+  outline: none;
+  background: #fff;
+}
+
+.auth-input:focus {
+  border-color: #141A43;
+  box-shadow: 0 0 0 3px rgba(20,26,67,0.15);
+}
+
+/* ===== Button: same width & height as inputs, override any global button styles ===== */
+.auth-btn {
+  all: unset;                    
+  display: block;
+  width: 100%;
+  margin-top: 30px;
+  height: var(--control-h);   
+  box-sizing: border-box;
+  border-radius: calc(var(--radius) + 14px);
+  background: #141A43;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-align: center;
+  line-height: var(--control-h);  
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+}
+
+.auth-btn:hover { background: #0f1538; }
+.auth-btn:active { transform: translateY(1px); }
+
+/* Error + link area */
+.auth-error {
+  color: #cc2936;
+  margin: 6px 0 2px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.auth-links {
+  margin-top: 10px;
+}
+
+.auth-muted-link {
+  color: #4a63d8;
+  text-decoration: underline;
+  font-size: 0.98rem;
+}
+
+
+@media (max-width: 420px) {
+  :root { --control-h: 52px; }
+  .auth-title { font-size: 1.9rem; }
+}

@@ -1,0 +1,58 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+.home-buttons {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 18px 16px 32px;
+  text-align: center;
+  font-family: 'Poppins', Arial, sans-serif; 
+}
+
+.home-buttons button { font-family: inherit; } 
+
+.home-subtitle {
+  margin: 24px 0 26px;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.home-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.home-buttons .home-btn {
+  appearance: none;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  padding: 14px 28px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: filter .15s ease;
+}
+
+.home-buttons .home-btn:hover { filter: brightness(0.98); }
+
+.home-buttons .home-btn--scan {
+  background: #c43d37;
+  border-color: #9f2c27;
+}
+
+.home-buttons .home-btn--confirm {
+  background: #54575c;
+  border-color: #3c3f43;
+}
+
+.home-buttons .home-btn__icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}

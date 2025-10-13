@@ -14,12 +14,11 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "mongodb": "^6.19.0",
     "multer": "^2.0.2",
-    "node-easyocr": "^1.0.9",
-    "tesseract.js": "^6.0.1"
+    "node-easyocr": "^1.0.9"
   },
   "devDependencies": {
     "jest": "^29.7.0",
