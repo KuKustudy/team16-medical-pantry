@@ -325,93 +325,104 @@ app.listen(8080, () => {
 
 //mongodb database access
 app.use(express.json());
-app.post("/mongoSearch", async (req, res) => {
+app.post("/search", async (req, res) => {
     console.log(req.body); 
-  try {
-    const medical_data = req.body;
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect()
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    const db = client.db("recall-guard");
-    const collection = db.collection("medical_items");
-    // collection.find().toArray().then(result => console.log(result));
+    medical_data = req.body;
 
-    // convert medical_data object into mongo search
-    let should = []
-    const { name, GTIN, lot_number } = req.body;
-    if (name && name.trim() !== "") {
-      should.push({
-        text: {
-          query: name,
-          path: "name",
-          fuzzy: { maxEdits: 2 }
-        }
-      });
+    // Search mongoDB
+    mongoResult = mongo_search(medical_data)
+    if (mongoResult != []) {
+        return mongoResult;
     }
 
-    
-    if (GTIN && GTIN.trim() !== "") {
-        should.push({
-        text: {
-            query: GTIN,
-            path: "GTIN",
-        }
-        });
-    };
-    
-
-        if (lot_number && lot_number.trim() !== "") {
-        should.push({
-        text: {
-            query: lot_number,
-            path: "lot_number",
-        }
-        });
-    };
 
 
-    const pipeline = [
-        {
-            $search: {
-                index: "default",
-                compound: {
-                    should: should
-                }
-            }
-        },
-        // Add confidence scores to data
-        {
-            $project: {
-            name: 1,
-            GTIN: 1,
-            lot_number: 1,
-            action: 1, 
-            start_date: 1, 
-            product_type: 1, 
-            hazard_class: 1, 
-            lot_num: 1,
-            source: 1,
-            score: { $meta: "searchScore" } 
-            }
-        },
-        { $limit: 10}
-    ]
-
-    const result = await collection.aggregate(pipeline).toArray();
-    console.log(result);
-    res.json(result);
- 
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
 })
 
-app.post("/mongoInsert", async (req, res) => {
+async function mongo_search(medical_data) {
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect()
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        const db = client.db("recall-guard");
+        const collection = db.collection("medical_items");
+        // collection.find().toArray().then(result => console.log(result));
 
-    const medical_data = req.body;
+        // convert medical_data object into mongo search
+        let should = []
+        const { name, GTIN, lot_number } = medical_data;
+        if (name && name.trim() !== "") {
+        should.push({
+            text: {
+            query: name,
+            path: "name",
+            fuzzy: { maxEdits: 2 }
+            }
+        });
+        }
+
+        
+        if (GTIN && GTIN.trim() !== "") {
+            should.push({
+            text: {
+                query: GTIN,
+                path: "GTIN",
+            }
+            });
+        };
+        
+
+            if (lot_number && lot_number.trim() !== "") {
+            should.push({
+            text: {
+                query: lot_number,
+                path: "lot_number",
+            }
+            });
+        };
+
+
+        const pipeline = [
+            {
+                $search: {
+                    index: "default",
+                    compound: {
+                        should: should
+                    }
+                }
+            },
+            // Add confidence scores to data
+            {
+                $project: {
+                name: 1,
+                GTIN: 1,
+                lot_number: 1,
+                action: 1, 
+                start_date: 1, 
+                product_type: 1, 
+                hazard_class: 1, 
+                lot_num: 1,
+                source: 1,
+                score: { $meta: "searchScore" } 
+                }
+            },
+            { $limit: 10}
+        ]
+
+        const result = await collection.aggregate(pipeline).toArray();
+        console.log(result);
+        return(result);
+    
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
+
+}
+
+async function mongo_insert(medical_data) {
     await console.log("inserting ", medical_data);
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -426,10 +437,10 @@ app.post("/mongoInsert", async (req, res) => {
         // convert medical_data object into mongo search
         await collection.insertMany(medical_data);
     
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-})
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
+}
 
 export default app;
