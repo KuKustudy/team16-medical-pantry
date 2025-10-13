@@ -332,7 +332,14 @@ app.post("/search", async (req, res) => {
     // Search mongoDB
     mongoResult = mongo_search(medical_data)
     if (mongoResult != []) {
-        return mongoResult;
+        res.json(mongoResult);
+    } else {
+        try {
+            res.json(await FDA_API_calls("", "0368001578592"));
+        } catch (fetch_error) {
+            console.error(fetch_error);
+            res.status(500).send("Error fetching FDA data");
+        }
     }
 
 
