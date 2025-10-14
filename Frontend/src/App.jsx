@@ -8,6 +8,7 @@ import { CreateAccountPage } from "./Pages/CreateAccountPage";
 import { LoginPage } from "./Pages/LoginPage";
 
 
+
 export default function App() {
   return (
     <HashRouter>
@@ -18,6 +19,7 @@ export default function App() {
         <Link to="/OptionsPage">OptionsPage</Link>
         <Link to="/AccountPage">AccountPage</Link>
         <Link to="/CreateAccountPage">CreateAccountPage</Link>
+        <Link to="/LoginPage">LoginPage</Link>
         <Link to="/LoginPage">LoginPage</Link>
       </nav>
       <Routes>
