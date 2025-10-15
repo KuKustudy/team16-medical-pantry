@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import "./MedicalInput.css";
-import { ScanPage } from "../Pages/ScanPage";
 
-export default function MedicalInput() {
+
+export default function MedicalInput({ initialItemName = "" }) {
   const navigate = useNavigate();                
 
   const [queries, setQueries] = useState([]);
@@ -11,52 +11,61 @@ export default function MedicalInput() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [ItemName, setItemName] = useState("");
-  const [GTIN, setGTIN] = useState("");
+  const [ItemName, setItemName] = useState(initialItemName);
+  const [GTIN_num, setGTIN_num] = useState("");
   const [BatchNumber, setBatchNumber] = useState("");
   const [LotNumber, setLotNumber] = useState("");
 
-  /*
-  // temporary database (delete when backend is ready)
+  //Delete if no need for mockDB
   async function searchMedicalItem(query) {
     const MOCK_DB = [
-      { Name: "Paracetamol", GTIN_num: "09345678901234", Batch_num: "B123", Lot_num: "L001", recalled: true},
-      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Batch_num: "B777", Lot_num: "L222", recalled: true},
-      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Batch_num: "B111", Lot_num: "L111", recalled: false},
-      { Name: "Cetrizine",   GTIN_num: "00999999999999", Batch_num: "B123", Lot_num: "L003", recalled: false},
+      { Name: "Paracetamol", GTIN_num: "09345678901234", Batch_num: "B123", Lot_num: "L001", recalled: true },
+      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Batch_num: "B777", Lot_num: "L222", recalled: true },
+      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Batch_num: "B111", Lot_num: "L111", recalled: false },
+      { Name: "Cetrizine",   GTIN_num: "00999999999999", Batch_num: "B123", Lot_num: "L003", recalled: false },
     ];
 
-    const name  = query.Name.trim().toLowerCase();
-    const GTIN  = query.GTIN_num.trim();
-    const batch_number = query.Batch_num.trim().toLowerCase();
-    const lot_number   = query.Lot_num.trim().toLowerCase();
+    // Guard against undefined, then normalize
+    const ItemName  = (query.ItemName ?? "").trim().toLowerCase();
+    const gtin  = (query.GTIN_num ?? "").trim();
+    const batch = (query.Batch_num ?? "").trim().toLowerCase();
+    const lot   = (query.Lot_num ?? "").trim().toLowerCase();
 
     return MOCK_DB.filter(item => {
-      const nameOK  = !name  || item.Name.toLowerCase().includes(name);
+      const nameOK  = !ItemName  || item.Name.toLowerCase().includes(ItemName);
       const gtinOK  = !gtin  || item.GTIN_num === gtin;
       const batchOK = !batch || (item.Batch_num?.toLowerCase() === batch);
       const lotOK   = !lot   || (item.Lot_num?.toLowerCase() === lot);
       return nameOK && gtinOK && batchOK && lotOK;
     });
   }
-  */
 
-
+ 
 
   async function handleSearchItem() {
     setError("");
 
     // require at least Item Name or GTIN(hasa to be between 8-14 digits)
-  if (GTIN && !/^\d{8,14}$/.test(GTIN.trim())) {
+  if (GTIN_num && !/^\d{8,14}$/.test(GTIN_num.trim())) {
     setError("GTIN must be 8–14 digits (numbers only).");
     return;
   }
 
   const query = {
-  name: ItemName || "",
-  GTIN: GTIN || "",
+  ItemName: ItemName || "",
+  GTIN_num: GTIN_num || "",
   batch_number: BatchNumber || "",
   lot_number: LotNumber || ""
+  };
+
+  
+
+/* //Switch between the mock and this
+    const query = {
+    Name: ItemName || "",
+    GTIN_num: GTIN_num || "",
+    Batch_num: BatchNumber || "",
+    Lot_num: LotNumber || "",
   };
 
   fetch("http://localhost:8080/search", {
@@ -76,7 +85,7 @@ export default function MedicalInput() {
     console.error("Fetch error:", error);
   });
 
-
+*/
     try {
       setLoading(true);
       const found = await searchMedicalItem(query);
@@ -94,7 +103,7 @@ export default function MedicalInput() {
 
   function clearAll() {
     setItemName("");
-    setGTIN("");
+    setGTIN_num("");
     setBatchNumber("");
     setLotNumber("");
     setResults([]);
@@ -106,22 +115,26 @@ export default function MedicalInput() {
   }
 
   return (
-    <div style={{ maxWidth: 520, margin: "10px auto", fontFamily: "Arial, sans-serif" }}>
+    <div style={{ 
+      maxWidth: 520, 
+      margin: "10px auto", 
+      fontFamily: "Arial, sans-serif",
+      }}>
+
       <h2>Medical Item Search</h2>
 
-      <div style={{ display: "grid", gap: 1 }}>
+      <div style={{ display: "grid", gap: 1 ,}}>
         <h3>Medical Item Name:</h3>
-        <input
-          type="text"
+        <textarea
           value={ItemName}
           onChange={e => setItemName(e.target.value)}
           placeholder="Enter Product Name"
         />
-        <h3>Global Trade Item Number (GTIN):</h3>
+        <h3>Global Trade Item Number (GTIN_num):</h3>
         <input
           type="text"
-          value={GTIN}
-          onChange={e => setGTIN(e.target.value)}
+          value={GTIN_num}
+          onChange={e => setGTIN_num(e.target.value)}
           placeholder="Enter GTIN Number"
           inputMode="numeric"
         />
@@ -161,3 +174,4 @@ export default function MedicalInput() {
     </div>
   );
 }
+

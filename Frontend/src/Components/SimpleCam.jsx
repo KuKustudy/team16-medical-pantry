@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
+import { useNavigate } from "react-router-dom";
 import "./SimpleCam.css"; // 👈 import the stylesheet
 
 
@@ -9,7 +10,7 @@ export default function SimpleCam() {
   const canvasRef = useRef(null);
 
   const [img, setImg] = useState(null);
-  
+  const navigate = useNavigate();
 
   /**
    * this function captures a photo (current frame of the web cam)
@@ -20,6 +21,7 @@ export default function SimpleCam() {
     const video = camRef.current.video;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+    
 
     // match canvas size to actual video resolution
     canvas.width = video.videoWidth;
@@ -50,7 +52,11 @@ export default function SimpleCam() {
       xmlHttpRequest.onreadystatechange = () => {
       if (xmlHttpRequest.readyState === XMLHttpRequest.DONE) {
         if (xmlHttpRequest.status === 200) {
-          console.log("Upload successful:", xmlHttpRequest.responseText);
+          // parse JSON and extract the scanned text and send to confirmation page
+          const responseFromBackend = JSON.parse(xmlHttpRequest.responseText);
+          const scannedText = responseFromBackend.data.fullText;
+          console.log("Upload successful:", scannedText);
+          navigate("/ConfirmationPage", {state: { scannedText }});
         } else {
           console.log("Upload failed:", xmlHttpRequest.status);
         }
