@@ -12,6 +12,7 @@ import { ClerkProvider } from '@clerk/clerk-react'
   - the link to homepage
   - the medical pantry logo
 */
+
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 describe('render the Header component', () => {
   
@@ -19,6 +20,7 @@ describe('render the Header component', () => {
     render(    
     <MemoryRouter>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+
         <Header />
       </ClerkProvider>
     </MemoryRouter>
@@ -31,6 +33,7 @@ describe('render the Header component', () => {
     expect(link).toBeInTheDocument();
   });
 
+  // Verifies that the logo image has the correct alt text
   it('logo image has correct alt text', () => {
     render(
       <MemoryRouter>
@@ -43,6 +46,7 @@ describe('render the Header component', () => {
     expect(logo).toBeTruthy();
   });
 
+  // Checks that at least one navigation link is rendered in the Header
   it('renders navigation links correctly', () => {
     render(
       <MemoryRouter>

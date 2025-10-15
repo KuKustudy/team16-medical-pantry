@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import App from "../src/App";
 import { ClerkProvider } from "@clerk/clerk-react";
 
+
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 describe("App component", () => {
@@ -33,6 +34,7 @@ describe("App component", () => {
         <App />
       </ClerkProvider>
     );
+
     const logo = screen.getByAltText(/medical pantry logo/i);
     expect(logo).toBeInTheDocument();
   });
