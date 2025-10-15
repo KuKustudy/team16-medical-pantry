@@ -1,11 +1,11 @@
-/* ===== Create Account page layout ===== */
+
 .CreateAccountPage {
   font-family: Poppins, Arial, sans-serif;
 }
 
 .auth-page {
-  /* center the form and give everything the same left/right edges */
-  max-width: 560px;        /* tweak to taste */
+  
+  max-width: 560px;       
   margin: 12px auto 48px;
   padding: 0 10px;
   text-align: center;
@@ -16,13 +16,12 @@
   margin: 16px 0 24px;
 }
 
-/* ===== Form ===== */
+
 .auth-card {
-  display: block;          /* single column */
+  display: block;        
   width: 100%;
 }
 
-/* Label + input stack; labels align with inputs automatically */
 .auth-field {
   text-align: left;
   margin-bottom: 16px;
@@ -35,13 +34,12 @@
   margin-top: 8px;
 }
 
-/* One size fits all */
+
 :root {
-  --control-h: 56px;       /* control height for inputs & button */
+  --control-h: 56px;       
   --radius: 5px;
 }
 
-/* Inputs: same width & height */
 .auth-input {
   display: block;
   width: 100%;
@@ -60,7 +58,7 @@
   box-shadow: 0 0 0 3px rgba(20,26,67,0.15);
 }
 
-/* ===== Button: same width & height as inputs, override any global button styles ===== */
+
 .auth-btn {
   all: unset;                    
   display: block;
@@ -82,7 +80,7 @@
 .auth-btn:hover { background: #0f1538; }
 .auth-btn:active { transform: translateY(1px); }
 
-/* Error + link area */
+
 .auth-error {
   color: #cc2936;
   margin: 6px 0 2px;
