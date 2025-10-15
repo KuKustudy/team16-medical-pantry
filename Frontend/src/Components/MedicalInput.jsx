@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import "./MedicalInput.css";
 
 
@@ -13,37 +13,34 @@ export default function MedicalInput({ initialItemName = "" }) {
 
   const [ItemName, setItemName] = useState(initialItemName);
   const [GTIN_num, setGTIN_num] = useState("");
-  const [BatchNumber, setBatchNumber] = useState("");
   const [LotNumber, setLotNumber] = useState("");
-
+/*
   //Delete if no need for mockDB
   async function searchMedicalItem(query) {
 
     const MOCK_DB = [
-      { Name: "Paracetamol", GTIN_num: "09345678901234", Batch_num: "B123", Lot_num: "L001" },
-      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Batch_num: "B777", Lot_num: "L222" },
-      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Batch_num: "B111", Lot_num: "L111" },
-      { Name: "Cetrizine",   GTIN_num: "00999999999999", Batch_num: "B123", Lot_num: "L003" },
+      { Name: "Paracetamol", GTIN_num: "09345678901234", Lot_num: "L001" },
+      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Lot_num: "L222" },
+      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Lot_num: "L111" },
+      { Name: "Cetrizine",   GTIN_num: "00999999999999", Lot_num: "L003" },
     ];
 
 
     // Guard against undefined, then normalize
-    const ItemName  = (query.item_name ?? "").trim().toLowerCase();
-    const gtin  = (query.GTIN ?? "").trim();
-    const batch = (query.batch_num ?? "").trim().toLowerCase();
-    const lot   = (query.lot_num ?? "").trim().toLowerCase();
+    const ItemName  = (query.ItemName ?? "").trim().toLowerCase();
+    const gtin  = (query.GTIN_num ?? "").trim();
+    const lot   = (query.Lot_num ?? "").trim().toLowerCase();
 
     return MOCK_DB.filter(item => {
       const nameOK  = !ItemName  || item.Name.toLowerCase().includes(ItemName);
       const gtinOK  = !gtin  || item.GTIN_num === gtin;
-      const batchOK = !batch || (item.Batch_num?.toLowerCase() === batch);
       const lotOK   = !lot   || (item.Lot_num?.toLowerCase() === lot);
       return nameOK && gtinOK && batchOK && lotOK;
     });
   }
 
  
-
+*/
   async function handleSearchItem() {
     setError("");
 
@@ -52,15 +49,22 @@ export default function MedicalInput({ initialItemName = "" }) {
     setError("GTIN must be 8–14 digits (numbers only).");
     return;
   }
-
+/*
   const query = {
-  item_name: ItemName || "",
-  GTIN: GTIN_num || "",
-  batch_number: BatchNumber || "",
+  ItemName: ItemName || "",
+  GTIN_num: GTIN_num || "",
   lot_number: LotNumber || ""
   };
+*/
+  
 
-  //merge over me
+//Switch between the mock and this
+    const query = {
+    item_name: ItemName || "",
+    GTIN: GTIN_num || "",
+    lot_number: LotNumber || "",
+  };
+
   fetch("http://localhost:8080/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -81,7 +85,7 @@ export default function MedicalInput({ initialItemName = "" }) {
 
     try {
       setLoading(true);
-      const found = await searchMedicalItem(query);
+      const found = data;
       setResults(found);
       setQueries(prev => [query, ...prev]);
 
@@ -97,7 +101,6 @@ export default function MedicalInput({ initialItemName = "" }) {
   function clearAll() {
     setItemName("");
     setGTIN_num("");
-    setBatchNumber("");
     setLotNumber("");
     setResults([]);
     setError("");
@@ -126,13 +129,6 @@ export default function MedicalInput({ initialItemName = "" }) {
           onChange={e => setGTIN_num(e.target.value)}
           placeholder="Enter GTIN Number"
           inputMode="numeric"
-        />
-        <h3>Batch Number:</h3>
-        <input
-          type="text"
-          value={BatchNumber}
-          onChange={e => setBatchNumber(e.target.value)}
-          placeholder="Enter Batch Number"
         />
         <h3>Lot Number:</h3>
         <input
