@@ -13,6 +13,7 @@ import { render, screen } from '@testing-library/react'
 */
 describe('Header component', () => {
 
+  // Ensures the Header renders correctly
   it('renders the Header with logo and link', () => {
     render(
       <MemoryRouter>
@@ -27,6 +28,7 @@ describe('Header component', () => {
     expect(link).toBeInTheDocument();
   });
 
+  // Verifies that the logo image has the correct alt text
   it('logo image has correct alt text', () => {
     render(
       <MemoryRouter>
@@ -37,6 +39,7 @@ describe('Header component', () => {
     expect(logo).toBeTruthy();
   });
 
+  // Checks that at least one navigation link is rendered in the Header
   it('renders navigation links correctly', () => {
     render(
       <MemoryRouter>
