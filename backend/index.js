@@ -101,18 +101,24 @@ async function FDA_API_calls(product_name, product_gtin){
         // push results based on product type
         if (device_data){
             for (let i = 0; i < results.length; i++){
-                var name = device_data.results[i].openfda.device_name;
+                var item_name = device_data.results[i].openfda.device_name;
                 var action = "Recall";
                 var lot_number = device_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/device/recall.json";
 
                 var start_date = device_data.results[i].event_date_initiated;
-                result_list.push([name, action, lot_number, start_date, data_source])    
+                result_list.push({
+                    "item_name": item_name,
+                    "action": action,
+                    "lot_number": lot_number,
+                    "start_date": start_date,
+                    "data_source": data_source
+                });    
             }
         } else {
             for (let i = 0; i < results.length; i++){
-                var name = drug_data.results[i].openfda.generic_name;
-                var gtin = drug_data.results[i].openfda.upc;
+                var item_name = drug_data.results[i].openfda.generic_name;
+                var GTIN = drug_data.results[i].openfda.upc;
                 var action = "Recall";
                 var lot_number = drug_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/drug/enforcement.json";
@@ -120,7 +126,16 @@ async function FDA_API_calls(product_name, product_gtin){
                 var start_date = drug_data.results[i].recall_initiation_date;
                 var product_type = drug_data.results[i].product_type;
                 var hazard_class = drug_data.results[i].classification;
-                result_list.push([name, gtin, action, lot_number, start_date, product_type, hazard_class, data_source])
+                result_list.push({
+                    "item_name": item_name,
+                    "GTIN": GTIN,
+                    "action": action,
+                    "lot_number": lot_number,
+                    "start_date": start_date,
+                    "product_type": product_type,
+                    "hazard_class": hazard_class,
+                    "data_source": data_source
+                });
             
             }
         }
@@ -351,12 +366,14 @@ app.post("/search", async (req, res) => {
     let medical_data = req.body;
 
     // Search mongoDB
-    let mongoResult = mongo_search(medical_data)
-    if (mongoResult != []) {
+    let mongoResult = await mongo_search(medical_data)
+    if (mongoResult.length > 0) {
+        console.log("Sending mongo database result to front end.")
         res.json(mongoResult);
     } else {
         try {
-            res.json(await FDA_API_calls("", "0368001578592"));
+            var results = await FDA_API_calls(medical_data.item_name, medical_data.GTIN)
+            res.json(results);
         } catch (fetch_error) {
             console.error(fetch_error);
             res.status(500).send("Error fetching FDA data");
@@ -385,7 +402,7 @@ async function mongo_search(medical_data) {
         should.push({
             text: {
             query: item_name,
-            path: "name",
+            path: "item_name",
             fuzzy: { maxEdits: 2 }
             }
         });
