@@ -460,6 +460,17 @@ async function mongo_search(medical_data) {
 
         const result = await collection.aggregate(pipeline).toArray();
         console.log(result);
+
+        // If there is a list of GTINS return it as a string
+        if (typeof(result.GTIN) != String) {
+        result.GTIN = result.GTIN.join(" ");
+        }
+
+        // If there is a list of lot numbers return it as a string
+        if (typeof(result.lot_number) != String) {
+        result.lot_number = result.lot_number.join(" ");
+        }
+
         return(result);
     
     } finally {
