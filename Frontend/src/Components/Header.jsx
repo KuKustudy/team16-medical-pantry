@@ -1,8 +1,25 @@
 import "./Header.css";
 import { Link } from "react-router-dom";
 import MedicalPantryLogo from "../assets/MedicalPantryLogo.png";
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react'
+import { useEffect } from "react";
+
+
 
 export function Header() {
+
+  // const { isLoaded, isSignedIn, user } = useUser();
+
+  // useEffect(()=>{
+  //   if(isLoaded && isSignedIn) {
+  //     console.log(user);
+  //     console.log("hello", user.firstName);
+  //     console.log("user email:", user.primaryEmailAddress.emailAddress);
+  //   }
+
+  // },[isLoaded, isSignedIn])
+
+
   return (
     <header className="header" role="banner">
       <Link to="/Home" className="header-button" aria-label="Go home">
@@ -12,6 +29,14 @@ export function Header() {
           alt="Medical Pantry Logo"
         />
       </Link>
+
+      <SignedOut>
+        <SignInButton />
+      </SignedOut>
+      <SignedIn>
+        <UserButton />
+      </SignedIn>
+
     </header>
   );
 }
