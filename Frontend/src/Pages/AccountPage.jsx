@@ -14,7 +14,7 @@ export default function AccountPage(){
             console.log("user email:", user.primaryEmailAddress.emailAddress);
             console.log("user role:", user.publicMetadata.role);
             const pattern = /^[A-Za-z0-9._%+-]+@medicalpantry\.org$/i;
-            if (pattern.test("julie@medicalpantry.org")) {
+            if (pattern.test("julie@medicalpanry.org")) {
                 console.log("user role is an admin");
                 setIsAdmin(true);
             } else {

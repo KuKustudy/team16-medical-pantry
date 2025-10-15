@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Header } from '../src/Components/Header'; // Use curly braces for named import
 import { MemoryRouter } from "react-router-dom";
 import { render, screen } from '@testing-library/react'
+import { ClerkProvider } from '@clerk/clerk-react'
 
 
 /*
@@ -12,10 +13,13 @@ import { render, screen } from '@testing-library/react'
   - the medical pantry logo
 */
 describe('render the Header component', () => {
+  const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
   it('renders the Header component', () => {
     render(    
     <MemoryRouter>
-      <Header />
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+        <Header />
+      </ClerkProvider>
     </MemoryRouter>
     );
     
