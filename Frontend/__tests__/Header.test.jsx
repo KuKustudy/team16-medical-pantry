@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Header } from '../src/Components/Header'; // Use curly braces for named import
 import { MemoryRouter } from "react-router-dom";
 import { render, screen } from '@testing-library/react'
+import { ClerkProvider } from '@clerk/clerk-react'
 
 
 /*
@@ -11,14 +12,18 @@ import { render, screen } from '@testing-library/react'
   - the link to homepage
   - the medical pantry logo
 */
-describe('Header component', () => {
 
-  // Ensures the Header renders correctly
-  it('renders the Header with logo and link', () => {
-    render(
-      <MemoryRouter>
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+describe('render the Header component', () => {
+  
+  it('renders the Header component', () => {
+    render(    
+    <MemoryRouter>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+
         <Header />
-      </MemoryRouter>
+      </ClerkProvider>
+    </MemoryRouter>
     );
     const header = screen.getByRole('banner');
     const logo = screen.getByAltText('Medical Pantry Logo');
@@ -32,7 +37,9 @@ describe('Header component', () => {
   it('logo image has correct alt text', () => {
     render(
       <MemoryRouter>
-        <Header />
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          <Header />
+        </ClerkProvider>
       </MemoryRouter>
     );
     const logo = screen.getByAltText(/medical pantry logo/i);
@@ -43,7 +50,9 @@ describe('Header component', () => {
   it('renders navigation links correctly', () => {
     render(
       <MemoryRouter>
-        <Header />
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          <Header />
+        </ClerkProvider>
       </MemoryRouter>
     );
     const links = screen.getAllByRole('link');

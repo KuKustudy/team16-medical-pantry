@@ -35,6 +35,8 @@ jobs:
 
       - name: Run tests
         working-directory: Frontend
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
         run: npm test
 
   backend-tests:
