@@ -32,7 +32,6 @@ import multer from "multer";
 import fs from "fs";  
 import {MongoClient, ServerApiVersion} from 'mongodb';
 import dotenv from "dotenv";
-import dotenv from "dotenv";
 import { log } from "node:console";
 import { stringify } from "node:querystring";
 
@@ -333,6 +332,7 @@ app.listen(8080, () => {
 //mongodb database access
 app.use(express.json());
 app.post("/search", async (req, res) => {
+    console.log(req.body);
     try {
         const result = await mongo_search(req.body);  // Await the async function
         res.json(result);  // Send the resolved result
@@ -355,11 +355,11 @@ async function mongo_search(medical_data) {
 
     // convert medical_data object into mongo search
     let should = []
-    const { name, GTIN, lot_number } = medical_data;
-    if (name && name.trim() !== "") {
+    const { item_name, GTIN, lot_number } = medical_data;
+    if (item_name && item_name.trim() !== "") {
       should.push({
         text: {
-          query: name,
+          query: item_name,
           path: "name",
           fuzzy: { maxEdits: 2 }
         }

@@ -67,6 +67,7 @@ export default function MedicalInput({ initialItemName = "" }) {
     Batch_num: BatchNumber || "",
     Lot_num: LotNumber || "",
   };
+*/
 
   fetch("http://localhost:8080/search", {
     method: "POST",
@@ -85,7 +86,6 @@ export default function MedicalInput({ initialItemName = "" }) {
     console.error("Fetch error:", error);
   });
 
-*/
     try {
       setLoading(true);
       const found = await searchMedicalItem(query);
@@ -126,7 +126,7 @@ export default function MedicalInput({ initialItemName = "" }) {
       <div style={{ display: "grid", gap: 1 ,}}>
         <h3>Medical Item Name:</h3>
         <textarea
-          value={ItemName}
+          value={item_name}
           onChange={e => setItemName(e.target.value)}
           placeholder="Enter Product Name"
         />
