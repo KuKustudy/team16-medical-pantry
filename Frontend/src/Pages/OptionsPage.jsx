@@ -64,7 +64,7 @@ export function ListOfOptions() {
                         <div className="detail-row">
                           <span className="label">Lot Number:</span>
                           <span className="value">{item.lot_number}</span>
-                        </div>
+                        </div>//
                       )}
                       <div className="detail-row">
                         <span className="label">Recall Status:</span>
