@@ -6,6 +6,7 @@ import SimpleCam from '../src/Components/SimpleCam'; // Use curly braces for nam
 import { BrowserRouter, MemoryRouter, Routes, Route } from "react-router-dom";
 import { vi } from 'vitest';
 
+// mock canvas API methods used by SimpleCam
 beforeAll(() => {
   HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
     drawImage: vi.fn(),
@@ -15,6 +16,7 @@ beforeAll(() => {
   );
 });
 
+// Mock react-webcam so no actual camera is accessed during tests
 vi.mock('react-webcam', () => {
   const React = require('react');
   const MockWebcam = React.forwardRef((props, ref) => {
@@ -34,6 +36,7 @@ vi.mock('react-webcam', () => {
 });
 
 describe('SimpleCam component', () => {
+  // Ensures that the webcam element and the Capture button both render correctly.
   it('renders webcam and capture button', () => {
     render(
       <BrowserRouter>
@@ -46,6 +49,7 @@ describe('SimpleCam component', () => {
     expect(screen.getByRole('button', { name: /capture/i })).toBeInTheDocument();
   });
 
+  // Verifies that clicking the Capture button triggers screenshot logic and does not crash the app.
   it('clicking capture does not crash', () => {
     render(
       <BrowserRouter>
@@ -59,6 +63,7 @@ describe('SimpleCam component', () => {
     expect(btn).toBeEnabled();
   });
 
+  // Confirms that the overall layout container is rendered in the DOM.
   it('renders container layout', () => {
     render(
       <BrowserRouter>

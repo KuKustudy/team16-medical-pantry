@@ -1,11 +1,13 @@
 import { jest } from "@jest/globals";
 import request from "supertest";
 
+// Load the Express app with a mocked OCR and MongoDB.
 async function loadAppWithMock(mockImpl) {
   process.env.NODE_ENV = "test";
   process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/dummy";
   jest.resetModules();
 
+  // Mock EasyOCR so tests can control its output
   jest.unstable_mockModule("node-easyocr", () => {
     class MockEasyOCR {
       async init() {}
@@ -15,6 +17,7 @@ async function loadAppWithMock(mockImpl) {
     return { __esModule: true, default: MockEasyOCR, EasyOCR: MockEasyOCR };
   });
 
+  // Mock MongoDB so no real DB is accessed
   jest.unstable_mockModule("mongodb", () => {
     class MockCollection { aggregate() { return { toArray: async () => [] }; } }
     class MockDb { command = async () => ({ ok: 1 }); collection = () => new MockCollection(); }
@@ -31,6 +34,7 @@ async function loadAppWithMock(mockImpl) {
   return app;
 }
 
+// Load the app with OCR mock returning a GS1-128 barcode string.
 async function loadAppWithGs1Mock(gs1Text) {
   process.env.NODE_ENV = "test";
   jest.resetModules();
@@ -46,6 +50,7 @@ async function loadAppWithGs1Mock(gs1Text) {
     return { __esModule: true, default: MockEasyOCR, EasyOCR: MockEasyOCR };
   });
   
+  // Same MongoDB mock as above
   jest.unstable_mockModule("mongodb", () => {
     class MockCollection { aggregate() { return { toArray: async () => [] }; } }
     class MockDb { command = async () => ({ ok: 1 }); collection = () => new MockCollection(); }
@@ -61,6 +66,8 @@ async function loadAppWithGs1Mock(gs1Text) {
   return app;
 }
 
+// Tests part
+// OCR returns GS1-128 barcode
 test("should extract GTIN/expiry/lot from GS1-128 string", async () => {
   const GS1 = "(01)04953170389559(17)230831(10)89V";
   const app = await loadAppWithGs1Mock(GS1);
@@ -87,6 +94,7 @@ test("should extract GTIN/expiry/lot from GS1-128 string", async () => {
   expect(lotMatch[1]).toBe("89V");
 });
 
+// Missing imagePath → should return 400
 test("POST /imagescan without imagePath should return 400", async () => {
   const app = await loadAppWithMock({
     readText: async () => []
@@ -99,6 +107,7 @@ test("POST /imagescan without imagePath should return 400", async () => {
   expect(res.status).toBe(400);
 });
 
+// OCR finds nothing → should return empty array
 test("POST /imagescan returns empty array when OCR finds nothing", async () => {
   const app = await loadAppWithMock({
     readText: async () => [] 
@@ -115,6 +124,7 @@ test("POST /imagescan returns empty array when OCR finds nothing", async () => {
   expect(res.body.data.length).toBe(0);
 });
 
+// OCR throws an error → should return 500
 test("POST /imagescan returns 500 when OCR throws", async () => {
   const app = await loadAppWithMock({
     readText: async () => {
@@ -130,6 +140,7 @@ test("POST /imagescan returns 500 when OCR throws", async () => {
   expect([500, 200]).toContain(res.status);
 });
 
+// Normal OCR output → confidence formatted as percentage string
 test("POST /imagescan returns normalized shape", async () => {
   const app = await loadAppWithMock({
     readText: async () => [
@@ -154,6 +165,7 @@ test("POST /imagescan returns normalized shape", async () => {
   }
 });
 
+// Ensure console logs can be silenced
 test("silence logs on demand", async () => {
   const spy = jest.spyOn(console, "log").mockImplementation(() => {});
   const app = await loadAppWithMock({
@@ -169,6 +181,7 @@ test("silence logs on demand", async () => {
   spy.mockRestore();
 });
 
+// Multiple OCR results → should combine correctly
 test("POST /imagescan returns multiple texts correctly joined", async () => {
   const app = await loadAppWithMock({
     readText: async () => [
@@ -189,6 +202,7 @@ test("POST /imagescan returns multiple texts correctly joined", async () => {
   expect(joined).toContain("World");
 });
 
+// OCR result without confidence → should not crash
 test("POST /imagescan handles result without confidence", async () => {
   const app = await loadAppWithMock({
     readText: async () => [{ text: "NoConf" }]
@@ -204,6 +218,7 @@ test("POST /imagescan handles result without confidence", async () => {
   expect(res.body.data[0].confidence).toBeUndefined();
 });
 
+// OCR result with bbox → should preserve bbox
 test("POST /imagescan preserves bbox field", async () => {
   const mockBBox = [10, 20, 30, 40];
   const app = await loadAppWithMock({
@@ -219,6 +234,7 @@ test("POST /imagescan preserves bbox field", async () => {
   expect(res.body.data[0].bbox).toEqual(mockBBox);
 });
 
+// Empty imagePath string → return 400
 test("POST /imagescan with empty imagePath should return 400", async () => {
   const app = await loadAppWithMock({
     readText: async () => []

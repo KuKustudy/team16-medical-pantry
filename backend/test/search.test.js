@@ -1,10 +1,13 @@
 import { jest } from "@jest/globals";
 import request from "supertest";
 
+// Loads the app with mocked MongoDB and EasyOCR dependencies for testing
 async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
+  // Set environment to 'test' mode
   process.env.NODE_ENV = "test";
   jest.resetModules();
 
+  // Mock OCR so the app can import it without real work
   jest.unstable_mockModule("node-easyocr", () => {
     class MockEasyOCR {
       async init() {}
@@ -16,6 +19,7 @@ async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
 
   const mockAggregateArgHolder = { lastPipeline: null };
 
+  // This replaces MongoDB client, DB, and collection with simplified mock classes.
   jest.unstable_mockModule("mongodb", () => {
     class MockCollection {
       aggregate(pipeline) {
@@ -31,17 +35,20 @@ async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
       }
     }
 
+    // Mock database object with minimal interface
     class MockDb {
       command = async () => ({ ok: 1 });
       collection = () => new MockCollection();
     }
 
+    // Mock MongoDB client used by the application
     class MockMongoClient {
       constructor() {}
       async connect() {
         if (connectImpl) return await connectImpl();
         return;
       }
+      // Returns the mock database
       db() { return new MockDb(); }
       async close() { return; }
     }
@@ -57,7 +64,8 @@ async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
   return { app, mockAggregateArgHolder };
 }
 
-describe("/search", () => {
+describe("/mongoSearch", () => {
+  // Tests when multiple non-empty search fields are provided
   test("returns aggregated results with multiple non-empty fields", async () => {
     const fakeDocs = [
       { name: "Amoxicillin", GTIN: "123", batch_number: "B1", lot_number: "L1", score: 7.2 },
@@ -82,6 +90,7 @@ describe("/search", () => {
     expect(should.length).toBe(3); 
   });
 
+  // Tests that only non-empty keys are included in the search with fuzzy match
   test("builds $search.should only for non-empty keys with fuzzy matching", async () => {
     const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
       toArrayImpl: async () => []
@@ -105,6 +114,7 @@ describe("/search", () => {
     expect(lotClause.text.fuzzy).toEqual({ maxEdits: 2 });
   });
 
+  // Tests error handling when aggregate().toArray() throws and ensures client closes
   test("returns 500 if aggregate.toArray throws and still closes client", async () => {
     let closed = false;
 
@@ -155,6 +165,7 @@ describe("/search", () => {
   });
 });
 
+// Tests behavior when all input fields are empty (should array empty)
 test("builds empty $search.should when all fields are empty", async () => {
   const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
     toArrayImpl: async () => []
@@ -174,6 +185,7 @@ test("builds empty $search.should when all fields are empty", async () => {
   expect(should.length).toBe(0);
 });
 
+// Tests that pipeline includes project stage with expected fields and meta score
 test("pipeline includes $project with expected fields and meta score", async () => {
   const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
     toArrayImpl: async () => []
