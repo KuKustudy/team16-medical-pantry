@@ -33,7 +33,9 @@ describe('render the Header component', () => {
   it('logo image has correct alt text', () => {
     render(
       <MemoryRouter>
-        <Header />
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          <Header />
+        </ClerkProvider>
       </MemoryRouter>
     );
     const logo = screen.getByAltText(/medical pantry logo/i);
@@ -43,7 +45,9 @@ describe('render the Header component', () => {
   it('renders navigation links correctly', () => {
     render(
       <MemoryRouter>
-        <Header />
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          <Header />
+        </ClerkProvider>
       </MemoryRouter>
     );
     const links = screen.getAllByRole('link');
