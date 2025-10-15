@@ -72,7 +72,6 @@ export default function SimpleCam() {
   return (
     <div className="simplecam-container">
       <Webcam
-        data-testid="webcam"
         ref={camRef}
         audio={false}
         screenshotFormat="image/png"

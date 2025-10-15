@@ -4,6 +4,9 @@ import { ConfirmationPage } from "./Pages/ConfirmationPage";
 import { ListOfOptions } from "./Pages/OptionsPage";
 import { ScanPage } from "./Pages/ScanPage";
 import AccountPage from "./Pages/AccountPage";
+import { CreateAccountPage } from "./Pages/CreateAccountPage";
+import { LoginPage } from "./Pages/LoginPage";
+
 
 export default function App() {
   return (
@@ -14,6 +17,8 @@ export default function App() {
         <Link to="/ConfirmationPage">ConfirmationPage</Link>
         <Link to="/OptionsPage">OptionsPage</Link>
         <Link to="/AccountPage">AccountPage</Link>
+        <Link to="/CreateAccountPage">CreateAccountPage</Link>
+        <Link to="/LoginPage">LoginPage</Link>
       </nav>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -22,6 +27,8 @@ export default function App() {
         <Route path="/OptionsPage" element={<ListOfOptions />} />
         <Route path="/AccountPage" element={<AccountPage />} />
         <Route path="*" element={<Home />} />
+        <Route path="/CreateAccountPage" element={<CreateAccountPage />} />
+        <Route path="/LoginPage" element={<LoginPage />} />
       </Routes>
     </HashRouter>
   );
