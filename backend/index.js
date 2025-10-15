@@ -2,25 +2,12 @@
 // then the backend will be run in localhost:8080
 
 /* 
-Medical data format for a search
+Medical data format
 let medical_data = {
 GTIN: "number",
 name: "drug name,"
+batch_number: "batch_num",
 lot_number: "lot_num",
-}
-*/
-
-/* 
-Medical data format for database
-let medical_data = {
-GTIN: ["number"],
-name: "drug name,"
-lot_number: ["lot_num"],
-start_date: date, 
-product_type: "type", 
-hazard_class: "class", 
-source: "FDA",
-description: "string",
 }
 
 */
@@ -360,39 +347,49 @@ if (process.env.NODE_ENV !== "test") {
 //mongodb database access
 app.use(express.json());
 app.post("/search", async (req, res) => {
-    console.log(req.body);
-    try {
-        const result = await mongo_search(req.body);  // Await the async function
-        res.json(result);  // Send the resolved result
-    } catch (error) {
-        console.error("Search error:", error);
-        res.status(500).json({ error: "Internal server error" });
+    console.log(req.body); 
+    let medical_data = req.body;
+
+    // Search mongoDB
+    let mongoResult = mongo_search(medical_data)
+    if (mongoResult != []) {
+        res.json(mongoResult);
+    } else {
+        try {
+            res.json(await FDA_API_calls("", "0368001578592"));
+        } catch (fetch_error) {
+            console.error(fetch_error);
+            res.status(500).send("Error fetching FDA data");
+        }
     }
-});
+
+
+
+})
 
 async function mongo_search(medical_data) {
     try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect()
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    const db = client.db("recall-guard");
-    const collection = db.collection("medical_items");
-    // collection.find().toArray().then(result => console.log(result));
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect()
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        const db = client.db("recall-guard");
+        const collection = db.collection("medical_items");
+        // collection.find().toArray().then(result => console.log(result));
 
-    // convert medical_data object into mongo search
-    let should = []
-    const { item_name, GTIN, lot_number } = medical_data;
-    if (item_name && item_name.trim() !== "") {
-      should.push({
-        text: {
-          query: item_name,
-          path: "name",
-          fuzzy: { maxEdits: 2 }
+        // convert medical_data object into mongo search
+        let should = []
+        const { item_name, GTIN, lot_number } = medical_data;
+        if (item_name && item_name.trim() !== "") {
+        should.push({
+            text: {
+            query: item_name,
+            path: "name",
+            fuzzy: { maxEdits: 2 }
+            }
+        });
         }
-      });
-    }
 
         
         if (GTIN && GTIN.trim() !== "") {
@@ -415,45 +412,68 @@ async function mongo_search(medical_data) {
         };
 
 
-    const pipeline = [
-        {
-            $search: {
-                index: "default",
-                compound: {
-                    should: should
+        const pipeline = [
+            {
+                $search: {
+                    index: "default",
+                    compound: {
+                        should: should
+                    }
                 }
-            }
-        },
-        // Add confidence scores to data
-        {
-            $project: {
-            name: 1,
-            GTIN: 1,
-            lot_number: 1,
-            action: 1, 
-            start_date: 1, 
-            product_type: 1, 
-            hazard_class: 1, 
-            lot_num: 1,
-            source: 1,
-            description: 1,
-            score: { $meta: "searchScore" } 
-            }
-        },
-        { $limit: 10}
-    ]
+            },
+            // Add confidence scores to data
+            {
+                $project: {
+                item_name: 1,
+                name: 1,
+                GTIN: 1,
+                lot_number: 1,
+                action: 1, 
+                start_date: 1, 
+                product_type: 1, 
+                hazard_class: 1, 
+                lot_num: 1,
+                source: 1,
+                description: 1,
+                score: { $meta: "searchScore" } 
+                }
+            },
+            { $limit: 10}
+        ]
 
-    const result = await collection.aggregate(pipeline).toArray();
-    console.log(result);
-    return result;
- 
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
+        const result = await collection.aggregate(pipeline).toArray();
+        console.log(result);
+        return(result);
+    
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
+
 }
 
-async function mongo_insert(medical_data) {
+async function mongo_recall_insert(medical_data) {
+    await console.log("inserting ", medical_data);
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect()
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        const db = client.db("recall-guard");
+        const collection = db.collection("medical_items");
+        // collection.find().toArray().then(result => console.log(result));
+
+        // convert medical_data object into mongo search
+        await collection.insertMany(medical_data);
+    
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
+}
+
+async function mongo_search_history_insert(name, medical_data) {
     await console.log("inserting ", medical_data);
     try {
         // Connect the client to the server	(optional starting in v4.7)
