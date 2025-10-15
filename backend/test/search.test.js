@@ -64,7 +64,7 @@ async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
   return { app, mockAggregateArgHolder };
 }
 
-describe("/mongoSearch", () => {
+describe("/search", () => {
   // Tests when multiple non-empty search fields are provided
   test("returns aggregated results with multiple non-empty fields", async () => {
     const fakeDocs = [
