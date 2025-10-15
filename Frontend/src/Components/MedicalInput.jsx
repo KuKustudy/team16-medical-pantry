@@ -28,10 +28,10 @@ export default function MedicalInput({ initialItemName = "" }) {
 
 
     // Guard against undefined, then normalize
-    const ItemName  = (query.ItemName ?? "").trim().toLowerCase();
-    const gtin  = (query.GTIN_num ?? "").trim();
-    const batch = (query.Batch_num ?? "").trim().toLowerCase();
-    const lot   = (query.Lot_num ?? "").trim().toLowerCase();
+    const ItemName  = (query.item_name ?? "").trim().toLowerCase();
+    const gtin  = (query.GTIN ?? "").trim();
+    const batch = (query.batch_num ?? "").trim().toLowerCase();
+    const lot   = (query.lot_num ?? "").trim().toLowerCase();
 
     return MOCK_DB.filter(item => {
       const nameOK  = !ItemName  || item.Name.toLowerCase().includes(ItemName);
@@ -54,23 +54,13 @@ export default function MedicalInput({ initialItemName = "" }) {
   }
 
   const query = {
-  ItemName: ItemName || "",
-  GTIN_num: GTIN_num || "",
+  item_name: ItemName || "",
+  GTIN: GTIN_num || "",
   batch_number: BatchNumber || "",
   lot_number: LotNumber || ""
   };
 
-  
-
-/* //Switch between the mock and this
-    const query = {
-    Name: ItemName || "",
-    GTIN_num: GTIN_num || "",
-    Batch_num: BatchNumber || "",
-    Lot_num: LotNumber || "",
-  };
-*/
-
+  //merge over me
   fetch("http://localhost:8080/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -87,6 +77,7 @@ export default function MedicalInput({ initialItemName = "" }) {
   .catch(error => {
     console.error("Fetch error:", error);
   });
+
 
     try {
       setLoading(true);
@@ -124,7 +115,7 @@ export default function MedicalInput({ initialItemName = "" }) {
       <div style={{ display: "grid", gap: 1 ,}}>
         <h3>Medical Item Name:</h3>
         <textarea
-          value={item_name}
+          value={ItemName}
           onChange={e => setItemName(e.target.value)}
           placeholder="Enter Product Name"
         />
