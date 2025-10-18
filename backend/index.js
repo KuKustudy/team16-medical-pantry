@@ -317,11 +317,32 @@ app.post("/imageprocessing", upload.single('photo'), async (req, res) => {
     }
 })
 
+app.post("/imagescan", async (req, res) => {
+  const { imagePath } = req.body;
+  if (!imagePath) {
+    return res.status(400).json({ success: false, error: "No imagePath provided" });
+  }
+
+  try {
+    const result = await ocr.readText(imagePath);
+    const data = result.map(item => ({
+      text: item.text,
+      confidence: item.confidence
+        ? (item.confidence * 100).toFixed(2) + "%"
+        : undefined,
+      bbox: item.bbox || undefined
+    }));
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("OCR Error", error.message);
+    return res.status(500).json({ success: false, error: "OCR failed" });
+  }
+});
 
 // specify the API address for backend
-app.listen(8080, () => {
-    console.log("Server started on port 8080");
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(8080, () => console.log("Server started on port 8080"));
+}
 
 //mongodb database access
 app.use(express.json());

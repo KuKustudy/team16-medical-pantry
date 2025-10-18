@@ -1,0 +1,129 @@
+import { jest } from "@jest/globals";
+import request from "supertest";
+
+process.env.DOTENV_CONFIG_QUIET = "true";
+
+jest.setTimeout(10000);
+
+async function loadAppWithFetchMock({ fetchImpl }) {
+  process.env.NODE_ENV = "test";
+  process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/dummy";
+
+  jest.resetModules();
+
+  jest.unstable_mockModule("node-easyocr", () => {
+    class MockEasyOCR {
+      async init() {}
+      async readText() {
+        return [];
+      }
+      async close() {}
+    }
+    return { __esModule: true, default: MockEasyOCR, EasyOCR: MockEasyOCR };
+  });
+
+  jest.unstable_mockModule("mongodb", () => {
+    class MockCollection {
+      aggregate() {
+        return { toArray: async () => [] };
+      }
+    }
+    class MockDb {
+      command = async () => ({ ok: 1 }); 
+      collection = () => new MockCollection();
+    }
+    class MockMongoClient {
+      async connect() {}
+      db() { return new MockDb(); }
+      async close() {}
+    }
+    return {
+      __esModule: true,
+      MongoClient: MockMongoClient,
+      ServerApiVersion: { v1: "v1" },
+    };
+  });
+
+  const fetchMock = jest.fn(
+    fetchImpl ??
+      (async () => ({
+        json: async () => ({ results: [] }),
+      }))
+  );
+
+  const { default: app } = await import("../index.js");
+
+  global.fetch = fetchMock;
+
+  return { app, fetchMock };
+}
+
+afterEach(() => {
+  delete global.fetch;
+  jest.clearAllMocks();
+});
+
+describe("/api", () => {
+  test("returns FDA data via GTIN path", async () => {
+    const fake = {
+      results: [{ openfda: { upc: "0368001578592", generic_name: "DEMO" } }],
+    };
+
+    const { app, fetchMock } = await loadAppWithFetchMock({
+      fetchImpl: async () => ({
+        json: async () => fake,
+      }),
+    });
+
+    const res = await request(app).get("/api?gtin=0368001578592");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(fake);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  test("handles empty results (200 with empty results array)", async () => {
+    const { app } = await loadAppWithFetchMock({
+      fetchImpl: async () => ({ json: async () => ({ results: [] }) }),
+    });
+
+    const res = await request(app).get("/api?gtin=foo");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ results: [] });
+  });
+
+  test("returns 500 when fetch throws", async () => {
+    const { app } = await loadAppWithFetchMock({
+      fetchImpl: async () => {
+        throw new Error("network failed");
+      },
+    });
+
+    const res = await request(app).get("/api?gtin=foo");
+    expect(res.status).toBe(500);
+  });
+
+  test("returns 500 when response.json throws", async () => {
+    const { app } = await loadAppWithFetchMock({
+      fetchImpl: async () => ({
+        json: async () => {
+          throw new Error("bad JSON");
+        },
+      }),
+    });
+
+    const res = await request(app).get("/api?gtin=foo");
+    expect(res.status).toBe(500);
+  });
+
+  test("query URL contains status filter and limit", async () => {
+    const { app, fetchMock } = await loadAppWithFetchMock({
+      fetchImpl: async (url) => ({
+        json: async () => ({ results: [] }),
+      }),
+    });
+
+    const res = await request(app).get("/api?status=active&limit=5&gtin=123");
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+});
