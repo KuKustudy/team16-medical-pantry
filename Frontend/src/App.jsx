@@ -20,11 +20,7 @@ export default function App() {
         <Link to="/AccountPage">AccountPage</Link>
         <Link to="/CreateAccountPage">CreateAccountPage</Link>
         <Link to="/LoginPage">LoginPage</Link>
-<<<<<<< Updated upstream
-        <Link to="/LoginPage">LoginPage</Link>
-=======
         <Link to="/ProductRecallPage">ProductRecallPage</Link>
->>>>>>> Stashed changes
       </nav>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -32,11 +28,12 @@ export default function App() {
         <Route path="/ConfirmationPage" element={<ConfirmationPage />} />
         <Route path="/OptionsPage" element={<ListOfOptions />} />
         <Route path="/AccountPage" element={<AccountPage />} />
-        <Route path="*" element={<Home />} />
         <Route path="/CreateAccountPage" element={<CreateAccountPage />} />
         <Route path="/LoginPage" element={<LoginPage />} />
         <Route path="/ProductRecallPage" element={<ProductRecallPage />} />
+        <Route path="*" element={<Home />} />
       </Routes>
+
     </HashRouter>
   );
 }
