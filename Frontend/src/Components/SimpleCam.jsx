@@ -12,6 +12,7 @@ export default function SimpleCam() {
   const [img, setImg] = useState(null);
   const navigate = useNavigate();
 
+
   /**
    * this function captures a photo (current frame of the web cam)
    * and send the photo to the backend for text scanning, after getting a
