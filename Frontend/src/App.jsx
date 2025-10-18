@@ -6,7 +6,7 @@ import { ScanPage } from "./Pages/ScanPage";
 import AccountPage from "./Pages/AccountPage";
 import { CreateAccountPage } from "./Pages/CreateAccountPage";
 import { LoginPage } from "./Pages/LoginPage";
-
+import { ProductRecallPage } from "./Pages/ProductRecallPage";
 
 
 export default function App() {
@@ -20,7 +20,11 @@ export default function App() {
         <Link to="/AccountPage">AccountPage</Link>
         <Link to="/CreateAccountPage">CreateAccountPage</Link>
         <Link to="/LoginPage">LoginPage</Link>
+<<<<<<< Updated upstream
         <Link to="/LoginPage">LoginPage</Link>
+=======
+        <Link to="/ProductRecallPage">ProductRecallPage</Link>
+>>>>>>> Stashed changes
       </nav>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -31,6 +35,7 @@ export default function App() {
         <Route path="*" element={<Home />} />
         <Route path="/CreateAccountPage" element={<CreateAccountPage />} />
         <Route path="/LoginPage" element={<LoginPage />} />
+        <Route path="/ProductRecallPage" element={<ProductRecallPage />} />
       </Routes>
     </HashRouter>
   );
