@@ -459,6 +459,13 @@ async function mongo_search(medical_data) {
         ]
 
         const result = await collection.aggregate(pipeline).toArray();
+
+        // Turn elements from arrays into strings for the front end
+        for (const element in result) {
+            if (typeof(element) == Array) {
+                result[element] = element.join(", "); 
+            }
+        }
         console.log(result);
 
         // If there is a list of GTINS return it as a string
