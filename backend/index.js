@@ -78,6 +78,7 @@ async function FDA_API_calls(product_name, product_gtin){
 
     // const product_name = "Surveying Laser Product"; // insert product name here sample: Surveying Laser Product
     // const product_gtin = ""; // insert gtin here sample: 0368001578592
+    const regex = (/(([A-Z]|[0-9]){5,})+/g)
         
     try {
         // queries api using GTIN first and name if no GTIN is entered
@@ -107,8 +108,10 @@ async function FDA_API_calls(product_name, product_gtin){
                 var data_source = "https://api.fda.gov/device/recall.json";
 
                 // Lot number Regex
-                lot_number = lot_number.match(/(([A-Z]|[0-9]){5,})+/g)
-                console.log(lot_number);
+                regex_matches = lot_number.match(regex)
+                if (regex_matches != null) {
+                    lot_number = regex_matches.join(", ")
+                }
 
                 var start_date = device_data.results[i].event_date_initiated;
                 result_list.push({
@@ -132,8 +135,10 @@ async function FDA_API_calls(product_name, product_gtin){
                 var hazard_class = drug_data.results[i].classification;
 
                 // Lot number Regex
-                lot_number = lot_number.match(/(([A-Z]|[0-9]){5,})+/g).join(", ");
-                console.log(lot_number);
+                regex_matches = lot_number.match(regex)
+                if (regex_matches != null) {
+                    lot_number = regex_matches.join(", ")
+                }
 
                 result_list.push({
                     "item_name": item_name,
@@ -151,7 +156,6 @@ async function FDA_API_calls(product_name, product_gtin){
 
         // removing duplicates
         let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
-        console.log(unique_result);
         return unique_result;
         
 
