@@ -458,25 +458,19 @@ async function mongo_search(medical_data) {
             { $limit: 10}
         ]
 
-        const result = await collection.aggregate(pipeline).toArray();
-
-        // Turn elements from arrays into strings for the front end
-        for (const element in result) {
-            if (typeof(element) == Array) {
-                result[element] = element.join(", "); 
-            }
-        }
-        console.log(result);
+        const result = await collection.aggregate(pipeline).toArray();     
 
         // If there is a list of GTINS return it as a string
-        if (typeof(result.GTIN) != String) {
+        if (result.GTIN && typeof(result.GTIN) != String) {
         result.GTIN = result.GTIN.join(" ");
         }
 
         // If there is a list of lot numbers return it as a string
-        if (typeof(result.lot_number) != String) {
+        if (result.lot_number && typeof(result.lot_number) != String) {
         result.lot_number = result.lot_number.join(" ");
         }
+
+        console.log(result);
 
         return(result);
     
