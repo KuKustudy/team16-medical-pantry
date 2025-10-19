@@ -106,6 +106,10 @@ async function FDA_API_calls(product_name, product_gtin){
                 var lot_number = device_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/device/recall.json";
 
+                // Lot number Regex
+                lot_number = lot_number.match(/(([A-Z]|[0-9]){5,})+/g)
+                console.log(lot_number);
+
                 var start_date = device_data.results[i].event_date_initiated;
                 result_list.push({
                     "item_name": item_name,
@@ -126,6 +130,11 @@ async function FDA_API_calls(product_name, product_gtin){
                 var start_date = drug_data.results[i].recall_initiation_date;
                 var product_type = drug_data.results[i].product_type;
                 var hazard_class = drug_data.results[i].classification;
+
+                // Lot number Regex
+                lot_number = lot_number.match(/(([A-Z]|[0-9]){5,})+/g).join(", ");
+                console.log(lot_number);
+
                 result_list.push({
                     "item_name": item_name,
                     "GTIN": GTIN,
@@ -142,6 +151,7 @@ async function FDA_API_calls(product_name, product_gtin){
 
         // removing duplicates
         let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
+        console.log(unique_result);
         return unique_result;
         
 
@@ -462,12 +472,12 @@ async function mongo_search(medical_data) {
 
         // If there is a list of GTINS return it as a string
         if (result.GTIN && typeof(result.GTIN) != String) {
-        result.GTIN = result.GTIN.join(" ");
+        result.GTIN = result.GTIN.join(", ");
         }
 
         // If there is a list of lot numbers return it as a string
         if (result.lot_number && typeof(result.lot_number) != String) {
-        result.lot_number = result.lot_number.join(" ");
+        result.lot_number = result.lot_number.join(", ");
         }
 
         console.log(result);
