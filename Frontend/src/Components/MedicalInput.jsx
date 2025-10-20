@@ -39,28 +39,17 @@ export default function MedicalInput({ initialItemName = "" }) {
       const res = await fetch("http://localhost:8080/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          item_name: ItemName || "",
-          GTIN: GTIN_num || "",
-          lot_number: LotNumber || "",
-        }),
+        body: JSON.stringify(query),
       });
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
-      // Backend returns a TOP-LEVEL ARRAY
-      const payload = await res.json(); // e.g., [{ _id, GTIN, name, score }, ...]
+      // Expect either an array OR an object like { results: [...] }
+      const payload = await res.json();
+      const found = Array.isArray(payload) ? payload : (payload.results ?? []);
 
-      // Normalize to your UI shape
-      const normalized = (Array.isArray(payload) ? payload : []).map(r => ({
-        _id: String(r._id ?? ""),
-        item_name: r.item_name ?? "",         // map "name" -> "item_name"
-        GTIN: r.GTIN ?? "",
-        lot_number: r.lot_number ?? "",  // backend doesn't send it; stay empty
-        score: r.score ?? null,          // keep the score if you want to display it
-      }));
-
-      navigate("/OptionsPage", { state: { results: normalized } });
+      // Navigate to results page with the array
+      navigate("/OptionsPage", { state: { results: found } });
     } catch (e) {
       console.error(e);
       setError("Search failed. Please try again.");
