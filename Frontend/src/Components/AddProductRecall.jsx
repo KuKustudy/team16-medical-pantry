@@ -6,9 +6,9 @@ import "./MedicalInput.css"; // reuse same styling
 export default function AddProductRecall() {
   const navigate = useNavigate();
 
-  const [itemName, setItemName] = useState("");
+  const [item_name, setItemName] = useState("");
   const [gtin, setGtin] = useState("");
-  const [lotNo, setLotNo] = useState("");
+  const [lot_num, setLotNo] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [loading, setLoading] = useState(false);
 
@@ -16,8 +16,6 @@ export default function AddProductRecall() {
     setItemName("");
     setGtin("");
     setLotNo("");
-    // keep the message unless you want to clear it:
-    // setMsg({ type: "", text: "" });
   }
 
   function handleRescan() {
@@ -28,7 +26,7 @@ export default function AddProductRecall() {
     setMsg({ type: "", text: "" });
 
     // Require at least one of Item Name OR GTIN
-    if (!itemName.trim() && !gtin.trim()) {
+    if (!item_name.trim() && !gtin.trim()) {
       setMsg({
         type: "error",
         text: "Please input either Medical Item Name or Global Trade Item Number (GTIN).",
@@ -43,16 +41,16 @@ export default function AddProductRecall() {
     }
 
     const payload = {
-      item_name: itemName || "",
+      item_name: item_name || "",
       GTIN: gtin || "",
-      lot_number: lotNo || "",
+      lot_number: lot_num || "",
     };
 
     try {
       setLoading(true);
 
       // ---------------------------
-      // BACKEND CALL DISABLED
+      // BACKEND CALL DISABLED. CHANGE THIS
       // const res = await fetch("http://localhost:8080/addRecall", {
       //   method: "POST",
       //   headers: { "Content-Type": "application/json" },
@@ -61,7 +59,7 @@ export default function AddProductRecall() {
       // if (!res.ok) throw new Error(`Server error: ${res.status}`);
       // ---------------------------
 
-      // ✅ Simulate success (no backend)
+      //Simulate success (no backend)
       await new Promise((r) => setTimeout(r, 400));
       setMsg({ type: "success", text: "Recall added successfully (local only)." });
       clearAll();
@@ -81,7 +79,7 @@ export default function AddProductRecall() {
         <h3>Medical Item Name:</h3>
         <input
           type="text"
-          value={itemName}
+          value={item_name}
           onChange={(e) => setItemName(e.target.value)}
           placeholder="Enter Medical Item Name"
         />
@@ -98,7 +96,7 @@ export default function AddProductRecall() {
         <h3>Lot Number:</h3>
         <input
           type="text"
-          value={lotNo}
+          value={lot_num}
           onChange={(e) => setLotNo(e.target.value)}
           placeholder="Enter Lot Number"
         />
