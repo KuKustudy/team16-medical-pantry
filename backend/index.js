@@ -51,35 +51,16 @@ app.use(express.json()); // automatically parse json request
 // initialise the OCR reader with desired language
 await ocr.init(['en']);
 
-
-// variables used to query the FDA API
-
-
-
-
 /*
-* this sends an HTTP GET request to FDA database API with query parameters.
+* sample queries: "Surveying Laser Product" "0368001578592"
 *
 * parameter 1: product name
 * paramater 2: GTIN (an unique id for medical item)
 * if no parameter has been specified, a message will be sent back to frontend.
+*
+* This function queries the FDA database based on the name and gtin of the product
+* It first checks the drug API, then checks the device API if there's no results from drugs API
 */
-app.get("/api", async (req, res) => {
-  try {
-    res.json(await FDA_API_calls("", ""))
-
-  } catch (fetch_error) {
-    console.error(fetch_error);
-    res.status(500).send("Error fetching FDA data");
-  }
-});
-
-
-// sample queries: "Surveying Laser Product" "0368001578592"
-//
-// This function queries the FDA database based on the name and gtin of the product
-// It first checks the drug API, then checks the device API if there's no results from drugs API
-// This functions outputs data in the medical data format shown above.
 async function FDA_API_calls(product_name, product_gtin){
 
     const regex = (/(([A-Z]|[0-9]){5,})+/g)
