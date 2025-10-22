@@ -66,7 +66,7 @@ await ocr.init(['en']);
 */
 app.get("/api", async (req, res) => {
   try {
-    res.json(await FDA_API_calls("", "0368001578592"))
+    res.json(await FDA_API_calls("", ""))
 
   } catch (fetch_error) {
     console.error(fetch_error);
@@ -95,9 +95,12 @@ async function FDA_API_calls(product_name, product_gtin){
         var results;
         if (device_data){
             results = device_data.results
+            console.log(device_data.results)
         } else {
             results = drug_data.results
         }
+
+
 
         // push results based on product type
         if (device_data){
@@ -108,7 +111,7 @@ async function FDA_API_calls(product_name, product_gtin){
                 var data_source = "https://api.fda.gov/device/recall.json";
 
                 // Lot number Regex
-                regex_matches = lot_number.match(regex)
+                var regex_matches = lot_number.match(regex)
                 if (regex_matches != null) {
                     lot_number = regex_matches.join(", ")
                 }
@@ -393,9 +396,6 @@ app.post("/search", async (req, res) => {
             res.status(500).send("Error fetching FDA data");
         }
     }
-
-
-
 })
 
 async function mongo_search(medical_data) {
@@ -495,6 +495,22 @@ async function mongo_search(medical_data) {
 
 }
 
+app.post("/insert", async (req, res) => {
+    console.log(req.body); 
+    let medical_data = req.body;
+
+    // Inserts medical data in MongoDB
+    try {
+        await mongo_recall_insert(medical_data);
+        console.log("Successful insert");
+        res.status(200).send("Successful insert");
+    } catch (fetch_error) {
+        console.error(fetch_error);
+        res.status(500).send("Error inserting data into database");
+    }
+    
+})
+
 async function mongo_recall_insert(medical_data) {
     await console.log("inserting ", medical_data);
     try {
@@ -508,7 +524,7 @@ async function mongo_recall_insert(medical_data) {
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
-        await collection.insertMany(medical_data);
+        await collection.insertOne(medical_data);
     
     } finally {
         // Ensures that the client will close when you finish/error
