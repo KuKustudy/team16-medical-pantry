@@ -34,7 +34,7 @@ export function ListOfOptions() {
                 <li key={index} className="result-item">
                   <div className="option-row">
                     <span className="text">
-                      <b>{item.item_name}</b> — GTIN: {item.GTIN}
+                      <b>{item.item_name}</b> — GTIN: {Array.isArray(item.GTIN) ? item.GTIN.join(", ") : item.GTIN}
                       {item.lot_number ? ` | Lot: ${item.lot_number}` : ""}
                     </span>
 
@@ -58,7 +58,7 @@ export function ListOfOptions() {
                       </div>
                       <div className="detail-row">
                         <span className="label">GTIN:</span>
-                        <span className="value">{item.GTIN}</span>
+                        <span className="value">{Array.isArray(item.GTIN) ? item.GTIN.join(", ") : item.GTIN}</span>
                       </div>
                       {item.lot_number && (
                         <div className="detail-row">

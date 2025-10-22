@@ -114,6 +114,7 @@ async function FDA_API_calls(product_name, product_gtin){
             for (let i = 0; i < results.length; i++){
                 var item_name = drug_data.results[i].openfda.generic_name;
                 var GTIN = drug_data.results[i].openfda.upc;
+                console.log(GTIN)
                 var action = "Recall";
                 var lot_number = drug_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/drug/enforcement.json";
