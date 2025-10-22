@@ -78,6 +78,7 @@ async function FDA_API_calls(product_name, product_gtin){
 
     // const product_name = "Surveying Laser Product"; // insert product name here sample: Surveying Laser Product
     // const product_gtin = ""; // insert gtin here sample: 0368001578592
+    const regex = (/(([A-Z]|[0-9]){5,})+/g)
         
     try {
         // queries api using GTIN first and name if no GTIN is entered
@@ -101,18 +102,30 @@ async function FDA_API_calls(product_name, product_gtin){
         // push results based on product type
         if (device_data){
             for (let i = 0; i < results.length; i++){
-                var name = device_data.results[i].openfda.device_name;
+                var item_name = device_data.results[i].openfda.device_name;
                 var action = "Recall";
                 var lot_number = device_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/device/recall.json";
 
+                // Lot number Regex
+                regex_matches = lot_number.match(regex)
+                if (regex_matches != null) {
+                    lot_number = regex_matches.join(", ")
+                }
+
                 var start_date = device_data.results[i].event_date_initiated;
-                result_list.push([name, action, lot_number, start_date, data_source])    
+                result_list.push({
+                    "item_name": item_name,
+                    "action": action,
+                    "lot_number": lot_number,
+                    "start_date": start_date,
+                    "data_source": data_source
+                });    
             }
         } else {
             for (let i = 0; i < results.length; i++){
-                var name = drug_data.results[i].openfda.generic_name;
-                var gtin = drug_data.results[i].openfda.upc;
+                var item_name = drug_data.results[i].openfda.generic_name;
+                var GTIN = drug_data.results[i].openfda.upc;
                 var action = "Recall";
                 var lot_number = drug_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/drug/enforcement.json";
@@ -120,7 +133,23 @@ async function FDA_API_calls(product_name, product_gtin){
                 var start_date = drug_data.results[i].recall_initiation_date;
                 var product_type = drug_data.results[i].product_type;
                 var hazard_class = drug_data.results[i].classification;
-                result_list.push([name, gtin, action, lot_number, start_date, product_type, hazard_class, data_source])
+
+                // Lot number Regex
+                regex_matches = lot_number.match(regex)
+                if (regex_matches != null) {
+                    lot_number = regex_matches.join(", ")
+                }
+
+                result_list.push({
+                    "item_name": item_name,
+                    "GTIN": GTIN,
+                    "action": action,
+                    "lot_number": lot_number,
+                    "start_date": start_date,
+                    "product_type": product_type,
+                    "hazard_class": hazard_class,
+                    "data_source": data_source
+                });
             
             }
         }
@@ -346,68 +375,127 @@ if (process.env.NODE_ENV !== "test") {
 
 //mongodb database access
 app.use(express.json());
-app.post("/mongoSearch", async (req, res) => {
+app.post("/search", async (req, res) => {
     console.log(req.body); 
-  try {
-    const medical_data = req.body;
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect()
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    const db = client.db("recall-guard");
-    const collection = db.collection("medical_items");
-    // collection.find().toArray().then(result => console.log(result));
+    let medical_data = req.body;
 
-    // convert medical_data object into mongo search
-    let should = []
-    for (var key in medical_data){
-        if (medical_data.hasOwnProperty(key) && 
-            String(medical_data[key]) != '') {
-            await should.push({
-                text: {
-                    query: String(medical_data[key]),
-                    path: String(key),
-                    fuzzy: { maxEdits: 2 }
-                }
-            })
+    // Search mongoDB
+    let mongoResult = await mongo_search(medical_data)
+    if (mongoResult.length > 0) {
+        console.log("Sending mongo database result to front end.")
+        res.json(mongoResult);
+    } else {
+        try {
+            var results = await FDA_API_calls(medical_data.item_name, medical_data.GTIN)
+            res.json(results);
+        } catch (fetch_error) {
+            console.error(fetch_error);
+            res.status(500).send("Error fetching FDA data");
         }
     }
 
-    const pipeline = [
-        {
-            $search: {
-                index: "default",
-                compound: {
-                    should: should
-                }
-            }
-        },
-        // Add confidence scores to data
-        {
-            $project: {
-            name: 1,
-            GTIN: 1,
-            batch_number: 1,
-            lot_number: 1,
-            score: { $meta: "searchScore" } 
-            }
-        }
-    ]
 
-    const result = await collection.aggregate(pipeline).toArray();
-    console.log(result);
-    res.json(result);
- 
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
+
 })
 
-app.post("/mongoInsert", async (req, res) => {
+async function mongo_search(medical_data) {
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect()
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        const db = client.db("recall-guard");
+        const collection = db.collection("medical_items");
+        // collection.find().toArray().then(result => console.log(result));
 
-    const medical_data = req.body;
+        // convert medical_data object into mongo search
+        let should = []
+        const { item_name, GTIN, lot_number } = medical_data;
+        if (item_name && item_name.trim() !== "") {
+        should.push({
+            text: {
+            query: item_name,
+            path: "item_name",
+            fuzzy: { maxEdits: 2 }
+            }
+        });
+        }
+
+        
+        if (GTIN && GTIN.trim() !== "") {
+            should.push({
+            text: {
+                query: GTIN,
+                path: "GTIN",
+            }
+            });
+        };
+        
+
+            if (lot_number && lot_number.trim() !== "") {
+            should.push({
+            text: {
+                query: lot_number,
+                path: "lot_number",
+            }
+            });
+        };
+
+
+        const pipeline = [
+            {
+                $search: {
+                    index: "default",
+                    compound: {
+                        should: should
+                    }
+                }
+            },
+            // Add confidence scores to data
+            {
+                $project: {
+                item_name: 1,
+                name: 1,
+                GTIN: 1,
+                lot_number: 1,
+                action: 1, 
+                start_date: 1, 
+                product_type: 1, 
+                hazard_class: 1, 
+                lot_num: 1,
+                source: 1,
+                description: 1,
+                score: { $meta: "searchScore" } 
+                }
+            },
+            { $limit: 10}
+        ]
+
+        const result = await collection.aggregate(pipeline).toArray();     
+
+        // If there is a list of GTINS return it as a string
+        if (result.GTIN && typeof(result.GTIN) != String) {
+        result.GTIN = result.GTIN.join(", ");
+        }
+
+        // If there is a list of lot numbers return it as a string
+        if (result.lot_number && typeof(result.lot_number) != String) {
+        result.lot_number = result.lot_number.join(", ");
+        }
+
+        console.log(result);
+
+        return(result);
+    
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
+
+}
+
+async function mongo_recall_insert(medical_data) {
     await console.log("inserting ", medical_data);
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -422,10 +510,31 @@ app.post("/mongoInsert", async (req, res) => {
         // convert medical_data object into mongo search
         await collection.insertMany(medical_data);
     
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-})
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
+}
+
+async function mongo_search_history_insert(name, medical_data) {
+    await console.log("inserting ", medical_data);
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect()
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        const db = client.db("recall-guard");
+        const collection = db.collection("medical_items");
+        // collection.find().toArray().then(result => console.log(result));
+
+        // convert medical_data object into mongo search
+        await collection.insertMany(medical_data);
+    
+    } finally {
+        // Ensures that the client will close when you finish/error
+        await client.close();
+    }
+}
 
 export default app;
