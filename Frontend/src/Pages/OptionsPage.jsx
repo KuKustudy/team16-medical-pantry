@@ -73,7 +73,7 @@ export function ListOfOptions() {
                       <div className="detail-row">
                         <span className="label">Data source:</span>
                         <a className="value link" href="#" onClick={(e) => e.preventDefault()}>
-                          FDA website
+                          FDA
                         </a>
                       </div>
                     </div>

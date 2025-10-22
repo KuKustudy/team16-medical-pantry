@@ -51,33 +51,18 @@ app.use(express.json()); // automatically parse json request
 // initialise the OCR reader with desired language
 await ocr.init(['en']);
 
-
-// variables used to query the FDA API
-
-
-
-
 /*
-* this sends an HTTP GET request to FDA database API with query parameters.
+* sample queries: "Surveying Laser Product" "0368001578592"
 *
 * parameter 1: product name
 * paramater 2: GTIN (an unique id for medical item)
 * if no parameter has been specified, a message will be sent back to frontend.
+*
+* This function queries the FDA database based on the name and gtin of the product
+* It first checks the drug API, then checks the device API if there's no results from drugs API
 */
-app.get("/api", async (req, res) => {
-  try {
-    res.json(await FDA_API_calls("", "0368001578592"))
-
-  } catch (fetch_error) {
-    console.error(fetch_error);
-    res.status(500).send("Error fetching FDA data");
-  }
-});
-
 async function FDA_API_calls(product_name, product_gtin){
 
-    // const product_name = "Surveying Laser Product"; // insert product name here sample: Surveying Laser Product
-    // const product_gtin = ""; // insert gtin here sample: 0368001578592
     const regex = (/(([A-Z]|[0-9]){5,})+/g)
         
     try {
@@ -95,9 +80,12 @@ async function FDA_API_calls(product_name, product_gtin){
         var results;
         if (device_data){
             results = device_data.results
+            console.log(device_data.results)
         } else {
             results = drug_data.results
         }
+
+
 
         // push results based on product type
         if (device_data){
@@ -394,9 +382,6 @@ app.post("/search", async (req, res) => {
             res.status(500).send("Error fetching FDA data");
         }
     }
-
-
-
 })
 
 async function mongo_search(medical_data) {
@@ -496,6 +481,23 @@ async function mongo_search(medical_data) {
 
 }
 
+// A way for the frontend to insert items into the databse
+app.post("/insert", async (req, res) => {
+    console.log(req.body); 
+    let medical_data = req.body;
+
+    // Inserts medical data in MongoDB
+    try {
+        await mongo_recall_insert(medical_data);
+        console.log("Successful insert");
+        res.status(200).send("Successful insert");
+    } catch (fetch_error) {
+        console.error(fetch_error);
+        res.status(500).send("Error inserting data into database");
+    }
+    
+})
+
 async function mongo_recall_insert(medical_data) {
     await console.log("inserting ", medical_data);
     try {
@@ -509,7 +511,7 @@ async function mongo_recall_insert(medical_data) {
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
-        await collection.insertMany(medical_data);
+        await collection.insertOne(medical_data);
     
     } finally {
         // Ensures that the client will close when you finish/error
