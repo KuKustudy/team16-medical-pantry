@@ -74,10 +74,14 @@ app.get("/api", async (req, res) => {
   }
 });
 
+
+// sample queries: "Surveying Laser Product" "0368001578592"
+//
+// This function queries the FDA database based on the name and gtin of the product
+// It first checks the drug API, then checks the device API if there's no results from drugs API
+// This functions outputs data in the medical data format shown above.
 async function FDA_API_calls(product_name, product_gtin){
 
-    // const product_name = "Surveying Laser Product"; // insert product name here sample: Surveying Laser Product
-    // const product_gtin = ""; // insert gtin here sample: 0368001578592
     const regex = (/(([A-Z]|[0-9]){5,})+/g)
         
     try {
@@ -495,6 +499,7 @@ async function mongo_search(medical_data) {
 
 }
 
+// A way for the frontend to insert items into the databse
 app.post("/insert", async (req, res) => {
     console.log(req.body); 
     let medical_data = req.body;
