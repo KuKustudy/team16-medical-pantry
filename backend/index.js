@@ -100,21 +100,20 @@ async function FDA_API_calls(product_name, product_gtin){
         }
 
         // push results based on product type
-        if (device_data){
+        if (device_data){      
             for (let i = 0; i < results.length; i++){
                 var item_name = device_data.results[i].openfda.device_name;
                 var action = "Recall";
                 var lot_number = device_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/device/recall.json";
 
-                // Lot number Regex
-                regex_matches = lot_number.match(regex)
+                var regex_matches = lot_number.match(regex)
                 if (regex_matches != null) {
-                    lot_number = regex_matches.join(", ")
+                    lot_number = regex_matches;
                 }
 
                 var start_date = device_data.results[i].event_date_initiated;
-                result_list.push({
+                result_list = push_without_duplicates(result_list, {
                     "item_name": item_name,
                     "action": action,
                     "lot_number": lot_number,
@@ -123,6 +122,7 @@ async function FDA_API_calls(product_name, product_gtin){
                 });    
             }
         } else {
+
             for (let i = 0; i < results.length; i++){
                 var item_name = drug_data.results[i].openfda.generic_name;
                 var GTIN = drug_data.results[i].openfda.upc;
@@ -134,13 +134,12 @@ async function FDA_API_calls(product_name, product_gtin){
                 var product_type = drug_data.results[i].product_type;
                 var hazard_class = drug_data.results[i].classification;
 
-                // Lot number Regex
-                regex_matches = lot_number.match(regex)
+                var regex_matches = lot_number.match(regex)
                 if (regex_matches != null) {
-                    lot_number = regex_matches.join(", ")
+                    lot_number = regex_matches;
                 }
 
-                result_list.push({
+                result_list = push_without_duplicates(result_list, {
                     "item_name": item_name,
                     "GTIN": GTIN,
                     "action": action,
@@ -153,10 +152,19 @@ async function FDA_API_calls(product_name, product_gtin){
             
             }
         }
+        
+        // Turn all arrays into strings
+        for (let result of result_list) {
+            for (let key in result) {
+                if (Array.isArray(result[key])) {
+                    result[key] = result[key].join(", ");
+                }
+            }
+        }
 
-        // removing duplicates
-        let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
-        return unique_result;
+        // Previous remove duplicates code
+        //let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
+        return result_list;
         
 
     } catch (fetch_error) {
@@ -202,6 +210,41 @@ async function fda_device_recalls(name){
 
     return data;
 }
+
+function push_without_duplicates(list, item) {
+    // Check if there's an existing matching object
+    for (let existing of list) {
+        let keys = Object.keys(item);
+        let differingArrays = [];
+
+        // Compare all key values
+        let allSameExceptArrays = keys.every(key => {
+            const a = existing[key];
+            const b = item[key];
+
+            if (Array.isArray(a) && Array.isArray(b)) {
+                differingArrays.push(key);
+                return true;
+            }
+
+            return a == b;
+        });
+
+        // If every field except for the arrays are the same then combine the arrays
+        if (allSameExceptArrays) {
+            for (let key of differingArrays) {
+                // Merge and deduplicate the arrays
+                existing[key] = [...new Set([...existing[key], ...item[key]])];
+            }
+            return list; // merged, done
+        }
+    }
+
+    // If it isn't a duplicate then just push it
+    list.push(item);
+    return list;
+}
+
 
 // function to convert GTIN 14 to GTIN 13
 function gtin_converter(gtin14){
