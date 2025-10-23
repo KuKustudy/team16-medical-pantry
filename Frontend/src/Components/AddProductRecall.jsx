@@ -40,7 +40,7 @@ export default function AddProductRecall() {
       return;
     }
 
-    const payload = {
+    const med_item = {
       item_name: item_name || "",
       GTIN: gtin || "",
       lot_number: lot_num || "",
@@ -49,19 +49,16 @@ export default function AddProductRecall() {
     try {
       setLoading(true);
 
-      // ---------------------------
-      // BACKEND CALL DISABLED. CHANGE THIS
-      // const res = await fetch("http://localhost:8080/addRecall", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(payload),
-      // });
-      // if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      // ---------------------------
+      const res = await fetch("http://localhost:8080/insert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(med_item),
+      });
 
-      //Simulate success (no backend)
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
       await new Promise((r) => setTimeout(r, 400));
-      setMsg({ type: "success", text: "Recall added successfully (local only)." });
+      setMsg({ type: "success", text: "Recall added successfully." });
       clearAll();
     } catch (e) {
       console.error(e);
