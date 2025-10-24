@@ -46,6 +46,22 @@ Database: MongoDB
 
     3. enter command: npm run test
 
+
+## use of AI declaration:
+
+    During the development of this project, we have made use of ChatGPT to assist our codings.
+    Example prompts that we have used:
+
+    Prompt 1: can you explain how this piece of code work? [attached the code we have found online tutorial]
+    Use 1: we used the output to help us understand what the code does and how the code can be applied in our project.
+    
+    Prompt 2: currently for like lot numbers it's extract as string regex the string for numbers turn the regex return back into a string from an array push the object with the lot number back into the return list and I need to access it while it's still an array right after the regex but then I need everything else in the return list to also be an array so I'll need to turn everything into a string from an array at the end better solution for this in js.
+    Use 2: we used the output to have an initial idea of what should be the workflow for extracting lot numbers from an array of string.
+    
+    Prompt 3: would puppeteer be able to scrape the results from https://www.tga.gov.au/how-we-regulate/monitoring-safety-and-shortages/procedure-recalls-product-alerts-and-product-corrections-prac/database-recalls-product-alerts-and-product-corrections-drac
+    Use 3: we used the output to understand the feasibility of scaping a government website, combined it with the research we done online to make an informed decision.
+
+
 ## Reference links:
 
 FDA: Food & Drug Administration, an United State organisation, their website 
