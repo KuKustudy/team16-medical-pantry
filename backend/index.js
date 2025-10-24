@@ -218,15 +218,15 @@ function push_without_duplicates(list, item) {
     // Check if there's an existing matching object
     for (let existing of list) {
         let keys = Object.keys(item);
-        let differingArrays = [];
+        let differing_arrays = [];
 
         // Compare all key values
-        let allSameExceptArrays = keys.every(key => {
+        let all_same_except_arrays = keys.every(key => {
             const a = existing[key];
             const b = item[key];
 
             if (Array.isArray(a) && Array.isArray(b)) {
-                differingArrays.push(key);
+                differing_arrays.push(key);
                 return true;
             }
 
@@ -234,8 +234,8 @@ function push_without_duplicates(list, item) {
         });
 
         // If every field except for the arrays are the same then combine the arrays
-        if (allSameExceptArrays) {
-            for (let key of differingArrays) {
+        if (all_same_except_arrays) {
+            for (let key of differing_arrays) {
                 // Merge and deduplicate the arrays
                 existing[key] = [...new Set([...existing[key], ...item[key]])];
             }
