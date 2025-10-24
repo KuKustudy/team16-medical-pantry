@@ -17,16 +17,16 @@ export function Header() {
         />
       </Link>
 
-
-      <div className="header-buttons">
+      {/*       <div className="header-buttons">
         <SignedOut>
           <SignInButton className="cl-signInButton"/>
         </SignedOut>
         <SignedIn>
           <UserButton className="cl-userButtonBox"/>
         </SignedIn>
-      </div>
+      </div>*/}
 
+      
     </header>
   );
 }
