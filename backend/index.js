@@ -29,6 +29,8 @@ const ocr = new EasyOCR();
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 dotenv.config();
 const uri = process.env.DATABASE_URL;
+const database_name = process.env.DATABASE_NAME;
+const recall_collection = process.env.RECALL_COLLECTION;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -88,7 +90,7 @@ async function FDA_API_calls(product_name, product_gtin){
 
 
         // push results based on product type
-        if (device_data){
+        if (device_data){      
             for (let i = 0; i < results.length; i++){
                 var item_name = device_data.results[i].openfda.device_name;
                 var action = "Recall";
@@ -98,11 +100,11 @@ async function FDA_API_calls(product_name, product_gtin){
                 // Lot number Regex
                 var regex_matches = lot_number.match(regex)
                 if (regex_matches != null) {
-                    lot_number = regex_matches.join(", ")
+                    lot_number = regex_matches;
                 }
 
                 var start_date = device_data.results[i].event_date_initiated;
-                result_list.push({
+                result_list = push_without_duplicates(result_list, {
                     "item_name": item_name,
                     "action": action,
                     "lot_number": lot_number,
@@ -111,6 +113,7 @@ async function FDA_API_calls(product_name, product_gtin){
                 });    
             }
         } else {
+
             for (let i = 0; i < results.length; i++){
                 var item_name = drug_data.results[i].openfda.generic_name;
                 var GTIN = drug_data.results[i].openfda.upc;
@@ -123,13 +126,12 @@ async function FDA_API_calls(product_name, product_gtin){
                 var product_type = drug_data.results[i].product_type;
                 var hazard_class = drug_data.results[i].classification;
 
-                // Lot number Regex
-                regex_matches = lot_number.match(regex)
+                var regex_matches = lot_number.match(regex)
                 if (regex_matches != null) {
-                    lot_number = regex_matches.join(", ")
+                    lot_number = regex_matches;
                 }
 
-                result_list.push({
+                result_list = push_without_duplicates(result_list, {
                     "item_name": item_name,
                     "GTIN": GTIN,
                     "action": action,
@@ -142,10 +144,19 @@ async function FDA_API_calls(product_name, product_gtin){
             
             }
         }
+        
+        // Turn all arrays into strings
+        for (let result of result_list) {
+            for (let key in result) {
+                if (Array.isArray(result[key])) {
+                    result[key] = result[key].join(", ");
+                }
+            }
+        }
 
-        // removing duplicates
-        let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
-        return unique_result;
+        // Previous remove duplicates code
+        //let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
+        return result_list;
         
 
     } catch (fetch_error) {
@@ -191,6 +202,52 @@ async function fda_device_recalls(name){
 
     return data;
 }
+
+/*
+* sample input: [{item1: "a", item2: [1, 3]}], {item1: "a", item2: [1, 2, 4]}
+* sample output: [{item1: "a", item2: [1, 2, 3, 4]}]
+*
+* parameter 1: Array of objects
+* paramater 2: One object
+*
+* This function compares the item that isn't in the array with all items within the array,
+* and if it is identical aside from the values that are in the arrays, then it conjoins the item's array's
+* values to the list object's arrays
+*/
+function push_without_duplicates(list, item) {
+    // Check if there's an existing matching object
+    for (let existing of list) {
+        let keys = Object.keys(item);
+        let differing_arrays = [];
+
+        // Compare all key values
+        let all_same_except_arrays = keys.every(key => {
+            const a = existing[key];
+            const b = item[key];
+
+            if (Array.isArray(a) && Array.isArray(b)) {
+                differing_arrays.push(key);
+                return true;
+            }
+
+            return a == b;
+        });
+
+        // If every field except for the arrays are the same then combine the arrays
+        if (all_same_except_arrays) {
+            for (let key of differing_arrays) {
+                // Merge and deduplicate the arrays
+                existing[key] = [...new Set([...existing[key], ...item[key]])];
+            }
+            return list;
+        }
+    }
+
+    // If it isn't a duplicate then just push it
+    list.push(item);
+    return list;
+}
+
 
 // function to convert GTIN 14 to GTIN 13
 function gtin_converter(gtin14){
@@ -362,7 +419,18 @@ if (process.env.NODE_ENV !== "test") {
   app.listen(8080, () => console.log("Server started on port 8080"));
 }
 
-//mongodb database access
+
+/*
+* This function searches various databases and resources to attempt to find if
+* the input item has been recalled.
+*
+* sample input: 
+* {GTIN: "023939301293",
+* name: "drug name",
+* lot_number: "0F238A",}
+* 
+* 
+*/
 app.use(express.json());
 app.post("/search", async (req, res) => {
     console.log(req.body); 
@@ -384,6 +452,12 @@ app.post("/search", async (req, res) => {
     }
 })
 
+/*
+* This function connects to a specifically formatted mongoDB database
+* 
+* 
+* 
+*/
 async function mongo_search(medical_data) {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -391,8 +465,8 @@ async function mongo_search(medical_data) {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        const db = client.db("recall-guard");
-        const collection = db.collection("medical_items");
+        const db = client.db(DATABASE_NAME);
+        const collection = db.collection(RECALL_COLLECTION);
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
@@ -495,7 +569,6 @@ app.post("/insert", async (req, res) => {
         console.error(fetch_error);
         res.status(500).send("Error inserting data into database");
     }
-    
 })
 
 async function mongo_recall_insert(medical_data) {
