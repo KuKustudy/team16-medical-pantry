@@ -1,97 +1,57 @@
 import React, { useState } from "react";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./MedicalInput.css";
 
-
 export default function MedicalInput({ initialItemName = "" }) {
-  const navigate = useNavigate();                
+  const navigate = useNavigate();
 
-  const [queries, setQueries] = useState([]);
-  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [ItemName, setItemName] = useState(initialItemName);
   const [GTIN_num, setGTIN_num] = useState("");
   const [LotNumber, setLotNumber] = useState("");
-/*
-  //Delete if no need for mockDB
-  async function searchMedicalItem(query) {
 
-    const MOCK_DB = [
-      { Name: "Paracetamol", GTIN_num: "09345678901234", Lot_num: "L001" },
-      { Name: "Ibuprofen",   GTIN_num: "01234567890123", Lot_num: "L222" },
-      { Name: "Ibuprofen",   GTIN_num: "01234567890000", Lot_num: "L111" },
-      { Name: "Cetrizine",   GTIN_num: "00999999999999", Lot_num: "L003" },
-    ];
-
-
-    // Guard against undefined, then normalize
-    const ItemName  = (query.ItemName ?? "").trim().toLowerCase();
-    const gtin  = (query.GTIN_num ?? "").trim();
-    const lot   = (query.Lot_num ?? "").trim().toLowerCase();
-
-    return MOCK_DB.filter(item => {
-      const nameOK  = !ItemName  || item.Name.toLowerCase().includes(ItemName);
-      const gtinOK  = !gtin  || item.GTIN_num === gtin;
-      const lotOK   = !lot   || (item.Lot_num?.toLowerCase() === lot);
-      return nameOK && gtinOK && batchOK && lotOK;
-    });
-  }
-
- 
-*/
   async function handleSearchItem() {
     setError("");
 
-    // require at least Item Name or GTIN(hasa to be between 8-14 digits)
-  if (GTIN_num && !/^\d{8,14}$/.test(GTIN_num.trim())) {
-    setError("GTIN must be 8–14 digits (numbers only).");
-    return;
-  }
-/*
-  const query = {
-  ItemName: ItemName || "",
-  GTIN_num: GTIN_num || "",
-  lot_number: LotNumber || ""
-  };
-*/
-  
+    // Require at least one of Item Name OR GTIN
+    if (!ItemName.trim() && !GTIN_num.trim()) {
+      setError("Please enter either an Item Name or a GTIN number.");
+      return;
+    }
 
-//Switch between the mock and this
+    // GTIN numeric length check (if provided)
+    if (GTIN_num && !/^\d{8,14}$/.test(GTIN_num.trim())) {
+      setError("GTIN must be 8–14 digits (numbers only).");
+      return;
+    }
+
     const query = {
-    item_name: ItemName || "",
-    GTIN: GTIN_num || "",
-    lot_number: LotNumber || "",
-  };
-
-  fetch("http://localhost:8080/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(query)
-  }).then(response => {
-  if (!response.ok) {
-    throw new Error("Server error: " + response.status);
-  }
-  return response.json(); // or response.text() if backend returns plain text
-  })
-  .then(data => {
-    console.log("Response from server:", data);
-  })
-  .catch(error => {
-    console.error("Fetch error:", error);
-  });
-
+      item_name: ItemName || "",
+      GTIN: GTIN_num || "",
+      lot_number: LotNumber || "",
+    };
 
     try {
       setLoading(true);
-      const found = data;
-      setResults(found);
-      setQueries(prev => [query, ...prev]);
 
-      // redirect to OptionsPage with the results
+      const res = await fetch("http://localhost:8080/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(query),
+      });
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      // Expect either an array OR an object like { results: [...] }
+      const payload = await res.json();
+      const found = Array.isArray(payload) ? payload : (payload.results ?? []);
+
+      // Navigate to results page with the array
       navigate("/OptionsPage", { state: { results: found } });
-    } catch {
+    } catch (e) {
+      console.error(e);
       setError("Search failed. Please try again.");
     } finally {
       setLoading(false);
@@ -102,7 +62,6 @@ export default function MedicalInput({ initialItemName = "" }) {
     setItemName("");
     setGTIN_num("");
     setLotNumber("");
-    setResults([]);
     setError("");
   }
 
@@ -111,22 +70,21 @@ export default function MedicalInput({ initialItemName = "" }) {
   }
 
   return (
-    <div className= "page">
-
+    <div className="page">
       <h2>Medical Item Search</h2>
 
-      <div style={{ display: "grid", gap: 1 ,}}>
+      <div style={{ display: "grid", gap: 1 }}>
         <h3>Medical Item Name:</h3>
         <textarea
           value={ItemName}
-          onChange={e => setItemName(e.target.value)}
+          onChange={(e) => setItemName(e.target.value)}
           placeholder="Enter Product Name"
         />
-        <h3>Global Trade Item Number (GTIN_num):</h3>
+        <h3>Global Trade Item Number (GTIN):</h3>
         <input
           type="text"
           value={GTIN_num}
-          onChange={e => setGTIN_num(e.target.value)}
+          onChange={(e) => setGTIN_num(e.target.value)}
           placeholder="Enter GTIN Number"
           inputMode="numeric"
         />
@@ -134,7 +92,7 @@ export default function MedicalInput({ initialItemName = "" }) {
         <input
           type="text"
           value={LotNumber}
-          onChange={e => setLotNumber(e.target.value)}
+          onChange={(e) => setLotNumber(e.target.value)}
           placeholder="Enter Lot Number"
         />
 
@@ -159,4 +117,3 @@ export default function MedicalInput({ initialItemName = "" }) {
     </div>
   );
 }
-

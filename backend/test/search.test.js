@@ -64,7 +64,7 @@ async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
   return { app, mockAggregateArgHolder };
 }
 
-describe("/mongoSearch", () => {
+describe("/search", () => {
   // Tests when multiple non-empty search fields are provided
   test("returns aggregated results with multiple non-empty fields", async () => {
     const fakeDocs = [
@@ -77,7 +77,7 @@ describe("/mongoSearch", () => {
     });
 
     const res = await request(app)
-      .post("/mongoSearch")
+      .post("/search")
       .send({ name: "Amo", GTIN: "123", lot_number: "L1", batch_number: "" })
       .set("Content-Type", "application/json");
 
@@ -98,7 +98,7 @@ describe("/mongoSearch", () => {
 
     const body = { name: "ABC", GTIN: "", batch_number: "B9", lot_number: 12345 };
     const res = await request(app)
-      .post("/mongoSearch")
+      .post("/search")
       .send(body)
       .set("Content-Type", "application/json");
 
@@ -156,7 +156,7 @@ describe("/mongoSearch", () => {
     })();
 
     const res = await request(app)
-      .post("/mongoSearch")
+      .post("/search")
       .send({ name: "X" })
       .set("Content-Type", "application/json");
 
@@ -172,7 +172,7 @@ test("builds empty $search.should when all fields are empty", async () => {
   });
 
   const res = await request(app)
-    .post("/mongoSearch")
+    .post("/search")
     .send({ name: "", GTIN: "", batch_number: "", lot_number: "" })
     .set("Content-Type", "application/json");
 
@@ -192,7 +192,7 @@ test("pipeline includes $project with expected fields and meta score", async () 
   });
 
   await request(app)
-    .post("/mongoSearch")
+    .post("/search")
     .send({ name: "Test" })
     .set("Content-Type", "application/json");
 
