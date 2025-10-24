@@ -29,6 +29,8 @@ const ocr = new EasyOCR();
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 dotenv.config();
 const uri = process.env.DATABASE_URL;
+const database_name = process.env.DATABASE_NAME;
+const recall_collection = process.env.RECALL_COLLECTION;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -201,6 +203,17 @@ async function fda_device_recalls(name){
     return data;
 }
 
+/*
+* sample input: [{item1: "a", item2: [1, 3]}], {item1: "a", item2: [1, 2, 4]}
+* sample output: [{item1: "a", item2: [1, 2, 3, 4]}]
+*
+* parameter 1: Array of objects
+* paramater 2: One object
+*
+* This function compares the item that isn't in the array with all items within the array,
+* and if it is identical aside from the values that are in the arrays, then it conjoins the item's array's
+* values to the list object's arrays
+*/
 function push_without_duplicates(list, item) {
     // Check if there's an existing matching object
     for (let existing of list) {
@@ -226,7 +239,7 @@ function push_without_duplicates(list, item) {
                 // Merge and deduplicate the arrays
                 existing[key] = [...new Set([...existing[key], ...item[key]])];
             }
-            return list; // merged, done
+            return list;
         }
     }
 
@@ -406,7 +419,18 @@ if (process.env.NODE_ENV !== "test") {
   app.listen(8080, () => console.log("Server started on port 8080"));
 }
 
-//mongodb database access
+
+/*
+* This function searches various databases and resources to attempt to find if
+* the input item has been recalled.
+*
+* sample input: 
+* {GTIN: "023939301293",
+* name: "drug name",
+* lot_number: "0F238A",}
+* 
+* 
+*/
 app.use(express.json());
 app.post("/search", async (req, res) => {
     console.log(req.body); 
@@ -428,6 +452,12 @@ app.post("/search", async (req, res) => {
     }
 })
 
+/*
+* This function connects to a specifically formatted mongoDB database
+* 
+* 
+* 
+*/
 async function mongo_search(medical_data) {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -435,8 +465,8 @@ async function mongo_search(medical_data) {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        const db = client.db("recall-guard");
-        const collection = db.collection("medical_items");
+        const db = client.db(DATABASE_NAME);
+        const collection = db.collection(RECALL_COLLECTION);
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
@@ -539,7 +569,6 @@ app.post("/insert", async (req, res) => {
         console.error(fetch_error);
         res.status(500).send("Error inserting data into database");
     }
-    
 })
 
 async function mongo_recall_insert(medical_data) {
