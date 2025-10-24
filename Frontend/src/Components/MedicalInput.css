@@ -1,70 +1,119 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+/* ========== Page & Type ========== */
 h2 {
-  margin-top: 25px;
+  margin-top: 24px;
   text-align: center;
-  font-size:30px;
+  font-size: clamp(20px, 3.5vw, 30px);
 }
+
 .page {
-    width: 520px;
-    margin: 10px auto;
-    font-family: 'Poppins', sans-serif;
-    padding: 0 10px;
+  width: 100%;
+  max-width: 640px;     
+  margin: 12px auto;
+  font-family: 'Poppins', sans-serif;
+  padding: 0 16px;            
+  box-sizing: border-box;
 }
 
-.actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin-top: 30px;
-}
-
-.actions .search-button {
-  grid-column: 1 / -1;
-}
-
-.search-button {
-  margin-top: 10px;
-  padding: 10px 12px;
-  font-weight: 600;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-}
-.rescan-button{
-  padding: 10px 12px;
-  font-weight: 600;
-  border: 3px solid rgb(239, 75, 75);
-  border-radius: 20px;
-  cursor: pointer;
-  margin-right: 20px;
-}
-.clear-button{
-  padding: 10px 12px;
-  font-weight: 600;
-  border: 3px solid grey;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-left: 20px;
-}
-
+/* ========== Inputs ========== */
 input[type="text"], textarea {
   font-family: Arial, sans-serif;
   font-size: 18px;
-  padding: 4px 8px;
+  padding: 10px 12px;        
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 8px;
   line-height: 1.5;
   box-sizing: border-box;
   width: 100%;
 }
 
 textarea {
-  resize: vertical;       /* allow vertical resizing */
-  overflow-y: auto;       /* enable vertical scroll */
+  resize: vertical;
+  min-height: 72px;
+}
+
+/* ========== Actions ========== */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;         /* equal columns */
+  grid-template-areas:
+    "rescan clear"
+    "search search";
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.actions > * { 
+  min-width: 0;                           /* prevent overflow */
+  box-sizing: border-box;
+  width: 100%;                           
+}
+
+/* Place buttons into areas */
+.rescan-button { grid-area: rescan; }
+.clear-button  { grid-area: clear;  }
+.search-button { grid-area: search; }
+
+/* Shared button look */
+.rescan-button,
+.clear-button,
+.search-button {
+  padding: 14px 16px;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.2s ease;
+  border: 3px solid transparent;         
+}
+
+/* Colors/borders (equal thickness) */
+.rescan-button { background: #fff; color: rgb(239,75,75); border-color: rgb(239,75,75); }
+.clear-button  { background: #fff; color: #6b7280;       border-color: #9ca3af; }
+.search-button { background: #141A43; color: #fff; }
+
+/* Remove any old margins that made widths uneven */
+.rescan-button, .clear-button, .search-button {
+  margin: 0;
+}
+
+.rescan-button:active,
+.clear-button:active,
+.search-button:active {
+  transform: scale(0.98);
 }
 
 
-.rescan-button { background: white; color: rgb(239, 75, 75); }
-.clear-button  { background: white; color: grey;}
-.search-button { background: #141A43; color: #fff; }
+/* ========== Responsive tweaks ========== */
+@media (max-width: 560px) {
+  .page {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 
+  /* Stack all buttons vertically and make them full-width */
+  .actions {
+
+    gap: 12px;
+  }
+
+  .rescan-button,
+  .clear-button,
+  .search-button {
+    width: 100%;
+    margin: 0;                   
+  }
+}
+
+/* Optional: small tablets use wider cap but still fluid */
+@media (min-width: 1024px) {
+  .page {
+    max-width: 720px;
+  }
+}
+
+/* Error text */
+.error-text {
+  color: crimson;
+  margin-top: 12px;
+}
