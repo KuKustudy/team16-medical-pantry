@@ -6,7 +6,7 @@ body {
   overflow: hidden;
 }
 
-.simplecam-screen {
+.simplecam-container {
   position: relative;
   width: 100vw;
   height: 100vh;

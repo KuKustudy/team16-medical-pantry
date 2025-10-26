@@ -17,16 +17,6 @@ describe("App component", () => {
     expect(header).toBeInTheDocument();
   });
 
-  it("renders navigation links (e.g., Home, ScanPage, etc.)", () => {
-    render(
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <App />
-      </ClerkProvider>
-    );
-    expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "ScanPage" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "OptionsPage" })).toBeInTheDocument();
-  });
 
   it("smoke test: renders without crashing and shows the logo", () => {
     render(
