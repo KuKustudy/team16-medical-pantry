@@ -18,7 +18,7 @@ export default function HomeButtons() {
           onClick={() => navigate("/ScanPage")}
         >
           <span className="home-btn__icon" aria-hidden>🔎</span>
-          <span>Scan</span>
+          <span>SCAN</span>
         </button>
 
         <button
@@ -27,7 +27,15 @@ export default function HomeButtons() {
           onClick={() => navigate("/ConfirmationPage")}
         >
           <span className="home-btn__icon" aria-hidden>📝</span>
-          <span>CHECK ITEM TO RECALLED ITEMS</span>
+          <span>MANUAL INPUT</span>
+        </button>
+        <button
+          type="button"
+          className="home-btn home-btn--confirm"
+          onClick={() => navigate("/ProductRecallPage")}
+        >
+          <span className="home-btn__icon" aria-hidden>📝</span>
+          <span>ADD NEW RECALL</span>
         </button>
       </div>
     </section>
