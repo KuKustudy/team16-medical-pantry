@@ -55,7 +55,7 @@ export default function SimpleCam() {
   };
 
   return (
-    <div className="simplecam-screen">
+    <div className="simplecam-container">
       <div className="simplecam-video-wrap">
         <Webcam
           ref={camRef}
@@ -71,7 +71,6 @@ export default function SimpleCam() {
       {/* hidden canvas for blob conversion */}
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
-      {/* bottom fixed capture button */}
       <button className="simplecam-btn-fixed" onClick={capture}>
         Capture
       </button>
