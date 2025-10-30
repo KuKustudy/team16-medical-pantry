@@ -12,6 +12,9 @@ export default function SimpleCam() {
   const [img, setImg] = useState(null);
   const navigate = useNavigate();
 
+  const host = window.location.hostname;
+  const api_base = `http://${host}:8080`;
+
 
   /**
    * this function captures a photo (current frame of the web cam)
@@ -44,7 +47,7 @@ export default function SimpleCam() {
       formData.append('photo', blob, 'photo.png');
 
       const xmlHttpRequest = new XMLHttpRequest();
-      xmlHttpRequest.open("POST", "http://localhost:8080/imageprocessing", true);
+      xmlHttpRequest.open("POST", `${api_base}/imageprocessing`, true);
 
       xmlHttpRequest.send(formData);
       console.log("frontend send out data via http request");

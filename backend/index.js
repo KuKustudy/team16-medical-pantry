@@ -31,6 +31,7 @@ dotenv.config();
 const uri = process.env.DATABASE_URL;
 const database_name = process.env.DATABASE_NAME;
 const recall_collection = process.env.RECALL_COLLECTION;
+const is_exposed = process.env.IS_EXPOSED;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -41,11 +42,27 @@ const client = new MongoClient(uri, {
   }
 });
 
+app.use(cors({
+  origin: true,            // reflect the requesting origin
+  credentials: true,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+}));
+
 // configuration for the app
-const corsOptions = {
+if (!is_exposed) {
+    const corsOptions = {
     // specify that we only accept request from our frontend
     origin: ["http://localhost:5173"], 
-};
+    };
+} else {
+    const corsOptions = {
+        // accept requests from anyone
+        origin: "*", 
+    };
+}
+
+
 app.use(cors(corsOptions));
 app.use(express.json()); // automatically parse json request
 
@@ -80,11 +97,13 @@ async function FDA_API_calls(product_name, product_gtin){
             
         // pulling out the values for UI
         var results;
-        if (device_data){
+        if (device_data && !device_data.error){
             results = device_data.results
-            console.log(device_data.results)
-        } else {
+        } else if (drug_data && !drug_data.error){
             results = drug_data.results
+        } else {
+            console.log("No FDA results found");
+            return [];
         }
 
 
@@ -168,7 +187,7 @@ async function FDA_API_calls(product_name, product_gtin){
 
 // function for fda drug queries
 async function fda_drug_recalls(name, gtin){
-    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.generic_name:"${name}"&limit=10`
+    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+(openfda.generic_name:"${name}"+OR+openfda.brand_name:"${name}")&limit=10`
     const gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${gtin}"&limit=10`
 
     let data;
@@ -416,7 +435,11 @@ app.post("/imagescan", async (req, res) => {
 
 // specify the API address for backend
 if (process.env.NODE_ENV !== "test") {
-  app.listen(8080, () => console.log("Server started on port 8080"));
+    if (is_exposed == "true") {
+        app.listen(8080, '0.0.0.0', () => {console.log('Server running on http://0.0.0.0:8080');});
+    } else {
+        app.listen(8080, () => console.log("Server started on port 8080"));
+    }
 }
 
 
@@ -437,7 +460,7 @@ app.post("/search", async (req, res) => {
     let medical_data = req.body;
 
     // Search mongoDB
-    let mongoResult = await mongo_search(medical_data)
+    let mongoResult = await mongo_search(medical_data);
     if (mongoResult.length > 0) {
         console.log("Sending mongo database result to front end.")
         res.json(mongoResult);
@@ -465,8 +488,8 @@ async function mongo_search(medical_data) {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        const db = client.db(DATABASE_NAME);
-        const collection = db.collection(RECALL_COLLECTION);
+        const db = client.db(database_name);
+        const collection = db.collection(recall_collection);
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
