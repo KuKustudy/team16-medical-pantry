@@ -9,7 +9,7 @@ Frontend: React
 
 Backend: Node.js + Express.js + EasyOCR
 
-Database: MongoDB
+Database: MongoDB Atlas
 
 
 ## 🖥️ how to run frontend:
@@ -46,6 +46,30 @@ Database: MongoDB
 
     3. enter command: npm run test
 
+## How to set up the database:
+
+1. Sign up or log in to [mongodb.com](mongodb.com).
+
+2. Create your Atlas database, as described in the [MongoDB documentation](https://www.mongodb.com/docs/get-started/?language=nodejs).
+
+3. Once you have created a cluster, go to the overview page and click "Connect".
+
+4. Choose your security settings.
+
+5. Proceed to connection method section and choose drivers, and select node.js, version 6.7 or later as your driver.
+
+5. Follow the instructions until you are presented with a connection string, and then copy the string.
+
+6. In the Backend Folder, create a file called ".env".
+
+7. In the file, enter the following.
+```
+DATABASE_URL= <The connection string>
+DATABASE_NAME= <The name of your database>
+RECALL_COLLECTION= <The name of the collection that you will keep your recalls in>
+IS_EXPOSED=false
+```
+You should now be able to connect to your database from within Recall Guard.
 
 ## use of AI declaration:
 
@@ -60,7 +84,6 @@ Database: MongoDB
     
     Prompt 3: would puppeteer be able to scrape the results from https://www.tga.gov.au/how-we-regulate/monitoring-safety-and-shortages/procedure-recalls-product-alerts-and-product-corrections-prac/database-recalls-product-alerts-and-product-corrections-drac
     Use 3: we used the output to understand the feasibility of scaping a government website, combined it with the research we done online to make an informed decision.
-
 
 ## Reference links:
 
