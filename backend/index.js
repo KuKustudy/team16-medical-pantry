@@ -49,14 +49,15 @@ app.use(cors({
   allowedHeaders: ["Content-Type"],
 }));
 
+let corsOptions
 // configuration for the app
 if (!is_exposed) {
-    const corsOptions = {
+    corsOptions = {
     // specify that we only accept request from our frontend
     origin: ["http://localhost:5173"], 
     };
 } else {
-    const corsOptions = {
+    corsOptions = {
         // accept requests from anyone
         origin: "*", 
     };
