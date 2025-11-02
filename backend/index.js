@@ -157,12 +157,17 @@ async function FDA_API_calls(product_name, product_gtin){
 
 // function for fda drug queries
 async function fda_drug_recalls(name, gtin){
-    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.generic_name:"${name}"&limit=10`
-    const gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${gtin}"&limit=10`
+    var name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.generic_name:"${name}"&limit=10`
+    var gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${gtin}"&limit=10`
 
     let data;
     if (gtin !== "") {
-        var converted_gtin = gtin_converter(gtin);
+
+        if (gtin.length == 14){
+            var converted_gtin = gtin_converter(gtin)
+            gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${converted_gtin}"&limit=10`
+        }
+        
         const fda_response = await fetch(gtin_query);
         data = await fda_response.json()
 
