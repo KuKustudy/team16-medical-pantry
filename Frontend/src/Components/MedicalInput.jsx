@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import "./MedicalInput.css";
 
 export default function MedicalInput({ initialItemName = "" }) {
+  const host = window.location.hostname;
+  const api_base = `http://${host}:8080`;
+
+
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -36,7 +40,7 @@ export default function MedicalInput({ initialItemName = "" }) {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:8080/search", {
+      const res = await fetch(`${api_base}/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(query),

@@ -31,6 +31,7 @@ dotenv.config();
 const uri = process.env.DATABASE_URL;
 const DATABASE_NAME = process.env.DATABASE_NAME;
 const RECALL_COLLECTION = process.env.RECALL_COLLECTION;
+const IS_EXPOSED = process.env.IS_EXPOSED;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -41,11 +42,28 @@ const client = new MongoClient(uri, {
   }
 });
 
+app.use(cors({
+  origin: true,            // reflect the requesting origin
+  credentials: true,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+}));
+
+let corsOptions
 // configuration for the app
-const corsOptions = {
+if (!IS_EXPOSED) {
+    corsOptions = {
     // specify that we only accept request from our frontend
     origin: ["http://localhost:5173"], 
-};
+    };
+} else {
+    corsOptions = {
+        // accept requests from anyone
+        origin: "*", 
+    };
+}
+
+
 app.use(cors(corsOptions));
 app.use(express.json()); // automatically parse json request
 
@@ -96,6 +114,9 @@ async function FDA_API_calls(product_name, product_gtin){
             results = device_data.results
         } else if (drug_data && drug_data.results) {
             results = drug_data.results
+        } else {
+            console.log("No FDA results found");
+            return [];
         }
 
         // if no results found, return empty array, assumed that we have 
@@ -107,7 +128,7 @@ async function FDA_API_calls(product_name, product_gtin){
         // push results based on product type
         if (device_data){      
             for (let i = 0; i < results.length; i++){
-                var item_name = device_data.results[i].openfda.device_name;
+                var item_name = device_data.results[i].openfda.device_name ?? device_data.results[i].product_description;
                 var action = "Recall";
                 var lot_number = device_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/device/recall.json";
@@ -130,7 +151,9 @@ async function FDA_API_calls(product_name, product_gtin){
         } else {
 
             for (let i = 0; i < results.length; i++){
-                var item_name = drug_data.results[i].openfda.generic_name;
+                var item_name = drug_data.results[i].openfda.generic_name ?? 
+                                drug_data.results[i].openfda.brand_name ?? 
+                                drug_data.results[i].product_description;
                 var GTIN = drug_data.results[i].openfda.upc;
                 console.log(GTIN)
                 var action = "Recall";
@@ -189,7 +212,7 @@ async function FDA_API_calls(product_name, product_gtin){
 * 
 */
 async function fda_drug_recalls(name, gtin){
-    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.generic_name:"${name}"&limit=10`
+    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+(openfda.generic_name:"${name}"+OR+openfda.brand_name:"${name}"+OR+product_description:"${name}")&limit=10`
     const gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${gtin}"&limit=10`
 
     let data;
@@ -218,7 +241,7 @@ async function fda_drug_recalls(name, gtin){
 */
 async function fda_device_recalls(name){
     let data;
-    var search_query = `https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"+AND+openfda.device_name:"${name}"&limit=10`
+    var search_query = `https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"+AND+(openfda.device_name:"${name}"+OR+product_description:"${name}")&limit=10`
     if (name !== "") {
         const fda_response = await fetch(search_query);
         data = await fda_response.json()
@@ -406,7 +429,11 @@ app.post("/imagescan", async (req, res) => {
 
 // specify the API address for backend
 if (process.env.NODE_ENV !== "test") {
-  app.listen(8080, () => console.log("Server started on port 8080"));
+    if (IS_EXPOSED == "true") {
+        app.listen(8080, '0.0.0.0', () => {console.log('Server running on http://0.0.0.0:8080');});
+    } else {
+        app.listen(8080, () => console.log("Server started on port 8080"));
+    }
 }
 
 
@@ -418,7 +445,7 @@ if (process.env.NODE_ENV !== "test") {
 *
 * sample input: 
 * {GTIN: "023939301293",
-* name: "drug name",
+* item_name: "drug name",
 * lot_number: "0F238A",}
 * 
 */
