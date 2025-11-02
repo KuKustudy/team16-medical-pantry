@@ -29,6 +29,9 @@ const ocr = new EasyOCR();
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 dotenv.config();
 const uri = process.env.DATABASE_URL;
+const DATABASE_NAME = process.env.DATABASE_NAME;
+const RECALL_COLLECTION = process.env.RECALL_COLLECTION;
+const IS_EXPOSED = process.env.IS_EXPOSED;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -39,11 +42,28 @@ const client = new MongoClient(uri, {
   }
 });
 
+app.use(cors({
+  origin: true,            // reflect the requesting origin
+  credentials: true,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+}));
+
+let corsOptions
 // configuration for the app
-const corsOptions = {
+if (!IS_EXPOSED) {
+    corsOptions = {
     // specify that we only accept request from our frontend
     origin: ["http://localhost:5173"], 
-};
+    };
+} else {
+    corsOptions = {
+        // accept requests from anyone
+        origin: "*", 
+    };
+}
+
+
 app.use(cors(corsOptions));
 app.use(express.json()); // automatically parse json request
 
@@ -52,14 +72,20 @@ app.use(express.json()); // automatically parse json request
 await ocr.init(['en']);
 
 /*
+* This function queries the open API maintained by the U.S. Food & Drug 
+* Administration department, it takes name and GTIN of a medical item, and
+* returns recall information if it is being recalled.
+*
 * sample queries: "Surveying Laser Product" "0368001578592"
 *
 * parameter 1: product name
 * paramater 2: GTIN (an unique id for medical item)
 * if no parameter has been specified, a message will be sent back to frontend.
 *
-* This function queries the FDA database based on the name and gtin of the product
-* It first checks the drug API, then checks the device API if there's no results from drugs API
+* A medical item is of two types, it can be a recalled medical device or a drug.
+* so we first checks the drug API, then checks the device API if there's no 
+* results from drugs API
+* 
 */
 async function FDA_API_calls(product_name, product_gtin){
 
@@ -71,26 +97,38 @@ async function FDA_API_calls(product_name, product_gtin){
         var device_data;
         var result_list = [];
         
+        // medical item could be a medical device or drug
+        // query the FDA recalled drug database first, and stored the result
         drug_data = await fda_drug_recalls(product_name, product_gtin);
+
+        // if no recall information can be found, we then query the FDA recalled
+        // medical device database, and store it in another variable
         if (drug_data.error && drug_data.error.code == "NOT_FOUND") {
             device_data = await fda_device_recalls(product_name);
         }
             
-        // pulling out the values for UI
-        var results;
-        if (device_data){
+        // one of the fetched drug recall info and medical device info will be 
+        // filled, pull out values for UI
+        var results = [];
+        if (device_data && device_data.results){
             results = device_data.results
-            console.log(device_data.results)
-        } else {
+        } else if (drug_data && drug_data.results) {
             results = drug_data.results
+        } else {
+            console.log("No FDA results found");
+            return [];
         }
 
-
+        // if no results found, return empty array, assumed that we have 
+        // done the search in our own database before calling this function
+        if (!results || results.length === 0) {
+            return [];
+        }
 
         // push results based on product type
-        if (device_data){
+        if (device_data){      
             for (let i = 0; i < results.length; i++){
-                var item_name = device_data.results[i].openfda.device_name;
+                var item_name = device_data.results[i].openfda.device_name ?? device_data.results[i].product_description;
                 var action = "Recall";
                 var lot_number = device_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/device/recall.json";
@@ -98,11 +136,11 @@ async function FDA_API_calls(product_name, product_gtin){
                 // Lot number Regex
                 var regex_matches = lot_number.match(regex)
                 if (regex_matches != null) {
-                    lot_number = regex_matches.join(", ")
+                    lot_number = regex_matches;
                 }
 
                 var start_date = device_data.results[i].event_date_initiated;
-                result_list.push({
+                result_list = push_without_duplicates(result_list, {
                     "item_name": item_name,
                     "action": action,
                     "lot_number": lot_number,
@@ -111,8 +149,11 @@ async function FDA_API_calls(product_name, product_gtin){
                 });    
             }
         } else {
+
             for (let i = 0; i < results.length; i++){
-                var item_name = drug_data.results[i].openfda.generic_name;
+                var item_name = drug_data.results[i].openfda.generic_name ?? 
+                                drug_data.results[i].openfda.brand_name ?? 
+                                drug_data.results[i].product_description;
                 var GTIN = drug_data.results[i].openfda.upc;
                 console.log(GTIN)
                 var action = "Recall";
@@ -123,13 +164,12 @@ async function FDA_API_calls(product_name, product_gtin){
                 var product_type = drug_data.results[i].product_type;
                 var hazard_class = drug_data.results[i].classification;
 
-                // Lot number Regex
-                regex_matches = lot_number.match(regex)
+                var regex_matches = lot_number.match(regex)
                 if (regex_matches != null) {
-                    lot_number = regex_matches.join(", ")
+                    lot_number = regex_matches;
                 }
 
-                result_list.push({
+                result_list = push_without_duplicates(result_list, {
                     "item_name": item_name,
                     "GTIN": GTIN,
                     "action": action,
@@ -142,10 +182,19 @@ async function FDA_API_calls(product_name, product_gtin){
             
             }
         }
+        
+        // Turn all arrays into strings
+        for (let result of result_list) {
+            for (let key in result) {
+                if (Array.isArray(result[key])) {
+                    result[key] = result[key].join(", ");
+                }
+            }
+        }
 
-        // removing duplicates
-        let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
-        return unique_result;
+        // Previous remove duplicates code
+        //let unique_result = [...new Set(result_list.map(JSON.stringify))].map(JSON.parse);
+        return result_list;
         
 
     } catch (fetch_error) {
@@ -155,7 +204,13 @@ async function FDA_API_calls(product_name, product_gtin){
 
 }
 
-// function for fda drug queries
+/*
+* This function is a helper function for the function 'FDA_API_calls'
+* this function queries the open API maintained by the U.S. Food & Drug 
+* Administration (FDA) department, it takes name and GTIN of a medical item, and
+* check whether it is in the recalled drug FDA database.
+* 
+*/
 async function fda_drug_recalls(name, gtin){
     var name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.generic_name:"${name}"&limit=10`
     var gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${gtin}"&limit=10`
@@ -182,10 +237,16 @@ async function fda_drug_recalls(name, gtin){
     return data;
 }
 
-// function for fda device queries
+/*
+* This function is a helper function for the function 'FDA_API_calls'
+* this function queries the open API maintained by the U.S. Food & Drug 
+* Administration (FDA) department, it takes name and GTIN of a medical item, and
+* check whether it is in the recalled medical device FDA database.
+* 
+*/
 async function fda_device_recalls(name){
     let data;
-    var search_query = `https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"+AND+openfda.device_name:"${name}"&limit=10`
+    var search_query = `https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"+AND+(openfda.device_name:"${name}"+OR+product_description:"${name}")&limit=10`
     if (name !== "") {
         const fda_response = await fetch(search_query);
         data = await fda_response.json()
@@ -197,7 +258,56 @@ async function fda_device_recalls(name){
     return data;
 }
 
-// function to convert GTIN 14 to GTIN 13
+/*
+* This function is a helper function for the function 'FDA_API_calls'
+* It is used because FDA API returns multiple results for the same item name
+* with different GTIN or lot number. Hence, to make sure the data we sent to
+* frontend is neat, where information are grouped by item name, we use this
+* function to concatenate results together.
+*
+* sample input: [{item1: "a", item2: [1, 3]}], {item1: "a", item2: [1, 2, 4]}
+* sample output: [{item1: "a", item2: [1, 2, 3, 4]}]
+*/
+function push_without_duplicates(list, item) {
+    // Check if there's an existing matching object
+    for (let existing of list) {
+        let keys = Object.keys(item);
+        let differing_arrays = [];
+
+        // Compare all key values
+        let all_same_except_arrays = keys.every(key => {
+            const a = existing[key];
+            const b = item[key];
+
+            if (Array.isArray(a) && Array.isArray(b)) {
+                differing_arrays.push(key);
+                return true;
+            }
+
+            return a == b;
+        });
+
+        // If every field except for the arrays are the same then combine the arrays
+        if (all_same_except_arrays) {
+            for (let key of differing_arrays) {
+                // Merge and deduplicate the arrays
+                existing[key] = [...new Set([...existing[key], ...item[key]])];
+            }
+            return list;
+        }
+    }
+
+    // If it isn't a duplicate then just push it
+    list.push(item);
+    return list;
+}
+
+
+/*
+* This function is a helper function for the function 'fda_drug_recalls'
+* It is used to convert GTIN 14 to GTIN 13
+*
+*/
 function gtin_converter(gtin14){
     var numbers = [];
     var check_digit = 0;
@@ -231,36 +341,6 @@ function gtin_converter(gtin14){
     return gtin13
 }
 
-/*
-* this imitates a POST request received from frontend.
-* This function scans text from a prestored image and prints the scanned
-* result to the console. This could be potentially included in the testing file.
-*/
-app.get("/imagescan_testing", async (req, res) => {
-    
-    try {
-        // access the image via image path
-        const imagePath = "color_image.png";
-        console.log("Received image paths", imagePath);
-
-        const result = await ocr.readText(imagePath);
-
-        // print scanned result line by line
-        console.log("OCR Result:");
-        result.forEach((item, index) => {
-            console.log(`Line ${index + 1}:`);
-            console.log(`  Text: ${item.text}`);
-            console.log(`  Confidence: ${(item.confidence * 100).toFixed(2)}%`);
-            console.log(`  Bounding Box: ${JSON.stringify(item.bbox)}`);
-            console.log('---');
-        })
-    } catch (error) {
-        console.error("OCR Error", error.message);
-    } finally {
-        await ocr.close();
-    }
-
-})
 
 
 
@@ -295,29 +375,11 @@ app.post("/imageprocessing", upload.single('photo'), async (req, res) => {
         const imagePath = req.file.path;
         const result = await ocr.readText(imagePath);
 
-        console.log("OCR Result:");
-        // if you want print line by line
-        // result.forEach((item, index) => {
-        //     console.log(`Line ${index + 1}:`);
-        //     console.log(`  Text: ${item.text}`);
-        //     console.log(`  Confidence: ${(item.confidence * 100).toFixed(2)}%`);
-        //     console.log(`  Bounding Box: ${JSON.stringify(item.bbox)}`);
-        //     console.log('---');
-        // })
 
         const fullText = result.map(item => item.text).join(" ");
 
         // Log the concatenated text
         console.log("Full OCR Text:", fullText);
-
-
-        // Convert OCR result into a JSON-friendly format
-        // const jsonResponse = result.map((item, index) => ({
-        //     line: index + 1,
-        //     text: item.text,
-        //     confidence: (item.confidence * 100).toFixed(2) + "%",
-        //     fullText: fullText,
-        // }));
 
         const jsonResponse = {
             fullText: fullText,
@@ -340,6 +402,14 @@ app.post("/imageprocessing", upload.single('photo'), async (req, res) => {
     }
 })
 
+
+/*
+* this function is for testing purpose only, and should not be called by
+* frontend. It executes a POST request received from frontend.
+* expected input front frontend: an image path
+* this function will then scan text from the image using EasyOCR,
+* and then return the scanned result to frontend in JSON format
+*/
 app.post("/imagescan", async (req, res) => {
   const { imagePath } = req.body;
   if (!imagePath) {
@@ -364,23 +434,40 @@ app.post("/imagescan", async (req, res) => {
 
 // specify the API address for backend
 if (process.env.NODE_ENV !== "test") {
-  app.listen(8080, () => console.log("Server started on port 8080"));
+    if (IS_EXPOSED == "true") {
+        app.listen(8080, '0.0.0.0', () => {console.log('Server running on http://0.0.0.0:8080');});
+    } else {
+        app.listen(8080, () => console.log("Server started on port 8080"));
+    }
 }
 
-//mongodb database access
+
+/*
+* This function searches various databases and resources to attempt to find if
+* the input item has been recalled.
+* We first query our own database - MongoDB
+* Then it searches in FDA's drug and medical device recall database.
+*
+* sample input: 
+* {GTIN: "023939301293",
+* item_name: "drug name",
+* lot_number: "0F238A",}
+* 
+*/
 app.use(express.json());
 app.post("/search", async (req, res) => {
-    console.log(req.body); 
+    console.log("received request",req.body); 
     let medical_data = req.body;
 
-    // Search mongoDB
+    // Search mongoDB  
     let mongoResult = await mongo_search(medical_data)
     if (mongoResult.length > 0) {
-        console.log("Sending mongo database result to front end.")
+        console.log("Sending mongo database result to front end.");
         res.json(mongoResult);
     } else {
         try {
-            var results = await FDA_API_calls(medical_data.item_name, medical_data.GTIN)
+            console.log("search in FDA with the data", medical_data);
+            var results = await FDA_API_calls(medical_data.item_name, medical_data.GTIN);
             res.json(results);
         } catch (fetch_error) {
             console.error(fetch_error);
@@ -389,6 +476,38 @@ app.post("/search", async (req, res) => {
     }
 })
 
+/*
+* This function connects to a specifically formatted mongoDB database
+* it takes medical_data as input
+* make a search in the database, and return matched object
+* if you search 'random'
+* the result from database will format as follow: 
+[
+  {
+    _id: new ObjectId('68fdc502d0ea37aab304c1b5'),
+    item_name: 'random',
+    GTIN: '8888888888',
+    lot_number: '8888',
+    score: 0.21363800764083862
+  },
+  {
+    _id: new ObjectId('68fdc57b38155035442a3547'),
+    item_name: 'random',
+    GTIN: '88888888889',
+    lot_number: '9999',
+    score: 0.21363800764083862
+  },
+  {
+    _id: new ObjectId('68fdc5ab38155035442a3548'),
+    item_name: 'random1',
+    GTIN: '888888888881',
+    lot_number: '1',
+    score: 0.17803166806697845
+  }
+]
+* 
+* 
+*/
 async function mongo_search(medical_data) {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -396,8 +515,8 @@ async function mongo_search(medical_data) {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        const db = client.db("recall-guard");
-        const collection = db.collection("medical_items");
+        const db = client.db(DATABASE_NAME);
+        const collection = db.collection(RECALL_COLLECTION);
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
@@ -464,6 +583,7 @@ async function mongo_search(medical_data) {
         ]
 
         const result = await collection.aggregate(pipeline).toArray();     
+        console.log("result from database format as follow:", result);
 
         // If there is a list of GTINS return it as a string
         if (result.GTIN && typeof(result.GTIN) != String) {
@@ -486,7 +606,12 @@ async function mongo_search(medical_data) {
 
 }
 
-// A way for the frontend to insert items into the databse
+/*
+* this function executes a POST request received from frontend.
+* expected input front frontend: information about a medical item including
+* item_name, GTIN, lot number
+* this function will then insert the new item into our MongoDB database.
+ */
 app.post("/insert", async (req, res) => {
     console.log(req.body); 
     let medical_data = req.body;
@@ -500,9 +625,11 @@ app.post("/insert", async (req, res) => {
         console.error(fetch_error);
         res.status(500).send("Error inserting data into database");
     }
-    
 })
 
+/*
+ * This function inserts new recall medical item into our MongoDB database.
+ */
 async function mongo_recall_insert(medical_data) {
     await console.log("inserting ", medical_data);
     try {

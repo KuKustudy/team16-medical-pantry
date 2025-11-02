@@ -12,8 +12,7 @@ import { ProductRecallPage } from "./Pages/ProductRecallPage";
 export default function App() {
   return (
     <HashRouter>
-      
-      <nav style={{display:"flex", gap:12, padding:12}}>
+      {/* <nav style={{display:"flex", gap:12, padding:12}}>
         <Link to="/">Home</Link>
         <Link to="/ScanPage">ScanPage</Link>
         <Link to="/ConfirmationPage">ConfirmationPage</Link>
@@ -22,7 +21,8 @@ export default function App() {
         <Link to="/CreateAccountPage">CreateAccountPage</Link>
         <Link to="/LoginPage">LoginPage</Link>
         <Link to="/ProductRecallPage">ProductRecallPage</Link>
-      </nav>
+      </nav>*/}
+      
       
       <Routes>
         <Route path="/" element={<Home />} />

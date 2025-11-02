@@ -26,6 +26,7 @@ h1{ font-size: 2rem; }
 }
 
 .results-scroll{
+  overflow-y: auto;
   flex: 1;
   min-height: 0;                  
   display: flex;
@@ -174,6 +175,5 @@ h1{ font-size: 2rem; }
   .expand-button{ width: 60px; height: 60px; }
   .results-list{ padding-bottom: 88px; } 
 }
-
 
 
