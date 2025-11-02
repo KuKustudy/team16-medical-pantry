@@ -1,0 +1,219 @@
+import { jest } from "@jest/globals";
+import request from "supertest";
+
+// Loads the app with mocked MongoDB and EasyOCR dependencies for testing
+// so that the tests don't connect to real databases or use OCR libraries
+async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
+  // Set environment to 'test' mode
+  process.env.NODE_ENV = "test";
+  jest.resetModules();
+
+  // Mock OCR so the app can import it without real work
+  jest.unstable_mockModule("node-easyocr", () => {
+    class MockEasyOCR {
+      async init() {}
+      async readText() { return []; }
+      async close() {}
+    }
+    return { __esModule: true, default: MockEasyOCR, EasyOCR: MockEasyOCR };
+  });
+
+  const mockAggregateArgHolder = { lastPipeline: null };
+
+  // This replaces MongoDB client, DB, and collection with simplified mock classes.
+  jest.unstable_mockModule("mongodb", () => {
+    class MockCollection {
+      aggregate(pipeline) {
+        mockAggregateArgHolder.lastPipeline = pipeline;
+        const cursor = {
+          toArray: async () => {
+            if (toArrayImpl) return await toArrayImpl();
+            if (aggregateImpl) return await aggregateImpl(pipeline);
+            return [];
+          }
+        };
+        return cursor;
+      }
+    }
+
+    // Mock database object with minimal interface
+    class MockDb {
+      command = async () => ({ ok: 1 });
+      collection = () => new MockCollection();
+    }
+
+    // Mock MongoDB client used by the application
+    class MockMongoClient {
+      constructor() {}
+      async connect() {
+        if (connectImpl) return await connectImpl();
+        return;
+      }
+      // Returns the mock database
+      db() { return new MockDb(); }
+      async close() { return; }
+    }
+
+    return {
+      __esModule: true,
+      MongoClient: MockMongoClient,
+      ServerApiVersion: { v1: "v1" }
+    };
+  });
+
+  const { default: app } = await import("../index.js");
+  return { app, mockAggregateArgHolder };
+}
+
+
+/*
+This describe function contains a set of tests that test the search for medical
+item is working properly.
+Test1: checks when information of a mock medical item is given, the application
+       is able to produce the expected output
+*/
+describe("/search", () => {
+  // Test1: test when multiple non-empty search fields are provided
+  test("returns aggregated results with multiple non-empty fields", async () => {
+
+    //mock data
+    const fakeDocs = [
+      { item_name: "Amoxicillin", GTIN: "123", lot_number: "L1", score: 7.2 },
+      { item_name: "Paracetamol", GTIN: "456", lot_number: "L2", score: 6.5 }
+    ];
+
+    const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
+      toArrayImpl: async () => fakeDocs
+    });
+
+    const res = await request(app)
+      .post("/search")
+      .send({ item_name: "Amo", GTIN: "123", lot_number: "L1"})
+      .set("Content-Type", "application/json");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(fakeDocs);
+
+    const pipeline = mockAggregateArgHolder.lastPipeline;
+    expect(Array.isArray(pipeline)).toBe(true);
+    const should = pipeline?.[0]?.$search?.compound?.should ?? [];
+    expect(should.length).toBe(3); 
+  });
+
+  // Tests that only non-empty keys are included in the search with fuzzy match
+  test("builds $search.should only for non-empty keys with fuzzy matching", async () => {
+    const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
+      toArrayImpl: async () => []
+    });
+
+    const body = { item_name: "ABC", GTIN: "", lot_number: "12345" };
+    const res = await request(app)
+      .post("/search")
+      .send(body)
+      .set("Content-Type", "application/json");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+
+    const should = mockAggregateArgHolder.lastPipeline?.[0]?.$search?.compound?.should ?? [];
+    const paths = should.map(s => s.text?.path);
+    expect(paths.sort()).toEqual(["lot_number", "item_name"].sort());
+
+    const lotClause = should.find(s => s.text?.path === "lot_number");
+    expect(lotClause.text.query).toBe(String(body.lot_number));
+  });
+
+  // Tests error handling when aggregate().toArray() throws and ensures client closes
+  test("returns 500 if aggregate.toArray throws and still closes client", async () => {
+    let closed = false;
+
+    const { app } = await (async () => {
+      process.env.NODE_ENV = "test";
+      jest.resetModules();
+
+      jest.unstable_mockModule("node-easyocr", () => {
+        class MockEasyOCR { async init(){} async readText(){ return []; } async close(){} }
+        return { __esModule: true, default: MockEasyOCR, EasyOCR: MockEasyOCR };
+      });
+
+      jest.unstable_mockModule("mongodb", () => {
+        class MockCollection {
+          aggregate() {
+            return {
+              toArray: async () => { throw new Error("agg failed"); }
+            };
+          }
+        }
+        class MockDb {
+          command = async () => ({ ok: 1 });
+          collection = () => new MockCollection();
+        }
+        class MockMongoClient {
+          async connect() {}
+          db() { return new MockDb(); }
+          async close() { closed = true; }
+        }
+        return {
+          __esModule: true,
+          MongoClient: MockMongoClient,
+          ServerApiVersion: { v1: "v1" }
+        };
+      });
+
+      const { default: app } = await import("../index.js");
+      return { app };
+    })();
+
+    const res = await request(app)
+      .post("/search")
+      .send({ name: "X" })
+      .set("Content-Type", "application/json");
+
+    expect([500, 502]).toContain(res.status); 
+    expect(closed).toBe(true); 
+  });
+});
+
+// Tests behavior when all input fields are empty (should array empty)
+test("builds empty $search.should when all fields are empty", async () => {
+  const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
+    toArrayImpl: async () => []
+  });
+
+  const res = await request(app)
+    .post("/search")
+    .send({ item_name: "", GTIN: "", lot_number: "" })
+    .set("Content-Type", "application/json");
+
+  expect(res.status).toBe(200);
+  expect(res.body).toEqual([]);
+
+  const pipeline = mockAggregateArgHolder.lastPipeline;
+  const should = pipeline?.[0]?.$search?.compound?.should ?? [];
+  expect(Array.isArray(should)).toBe(true);
+  expect(should.length).toBe(0);
+});
+
+// Tests that pipeline includes project stage with expected fields and meta score
+test("pipeline includes $project with expected fields and meta score", async () => {
+  const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
+    toArrayImpl: async () => []
+  });
+
+  await request(app)
+    .post("/search")
+    .send({ item_name: "Amo", GTIN: "123", lot_number: "L1"})
+    .set("Content-Type", "application/json");
+
+  const pipeline = mockAggregateArgHolder.lastPipeline;
+  expect(Array.isArray(pipeline)).toBe(true);
+
+  const project = pipeline?.[1]?.$project;
+  expect(project).toBeTruthy();
+
+  expect(project.item_name).toBe(1);
+  expect(project.GTIN).toBe(1);
+  expect(project.lot_number).toBe(1);
+
+  expect(project.score).toEqual({ $meta: "searchScore" });
+});

@@ -19,10 +19,8 @@ export function ListOfOptions() {
       <div className="page-header">
         <Header />
         <h1>Results</h1>
-
       </div>
 
-      {/* Scroll area takes remaining height; footer is sticky at bottom */}
       <div className="results-scroll">
         {results.length === 0 ? (
           <div className="no-results" aria-live="polite">
@@ -34,18 +32,16 @@ export function ListOfOptions() {
               const isOpen = expandedIndex === index;
               return (
                 <li key={index} className="result-item">
-                  {/* Red pill header */}
                   <div className="option-row">
                     <span className="text">
-                      <b>{item.Name}</b> — GTIN: {item.GTIN_num}
-                      {item.Batch_num ? ` | Batch: ${item.Batch_num}` : ""}
-                      {item.Lot_num ? ` | Lot: ${item.Lot_num}` : ""}
+                      <b>{item.item_name}</b> — GTIN: {Array.isArray(item.GTIN) ? item.GTIN.join(", ") : item.GTIN}
+                      {item.lot_number ? ` | Lot: ${item.lot_number}` : ""}
                     </span>
 
                     <button
                       className="expand-button"
                       onClick={() =>
-                        setExpandedIndex(prev => (prev === index ? -1 : index))
+                        setExpandedIndex((prev) => (prev === index ? -1 : index))
                       }
                       aria-expanded={isOpen}
                       title={isOpen ? "Collapse" : "Expand"}
@@ -54,37 +50,30 @@ export function ListOfOptions() {
                     </button>
                   </div>
 
-                  {/* Details card (below the pill) */}
                   {isOpen && (
                     <div className="details-panel">
                       <div className="detail-row">
                         <span className="label">Item Name:</span>
-                        <span className="value">{item.Name}</span>
+                        <span className="value">{item.item_name}</span>
                       </div>
                       <div className="detail-row">
                         <span className="label">GTIN:</span>
-                        <span className="value">{item.GTIN_num}</span>
+                        <span className="value">{Array.isArray(item.GTIN) ? item.GTIN.join(", ") : item.GTIN}</span>
                       </div>
+                      {item.lot_number && (
+                        <div className="detail-row">
+                          <span className="label">Lot Number:</span>
+                          <span className="value">{item.lot_number}</span>
+                        </div>
+                      )}
                       <div className="detail-row">
                         <span className="label">Recall Status:</span>
                         <span className="value recall">Recalled</span>
                       </div>
-                      {item.Batch_num && (
-                        <div className="detail-row">
-                          <span className="label">Batch Number:</span>
-                          <span className="value">{item.Batch_num}</span>
-                        </div>
-                      )}
-                      {item.Lot_num && (
-                        <div className="detail-row">
-                          <span className="label">Lot Number:</span>
-                          <span className="value">{item.Lot_num}</span>
-                        </div>
-                      )}
                       <div className="detail-row">
                         <span className="label">Data source:</span>
-                        <a className="value link" href="#" onClick={e => e.preventDefault()}>
-                          TGA website
+                        <a className="value link" href="#" onClick={(e) => e.preventDefault()}>
+                          FDA
                         </a>
                       </div>
                     </div>
@@ -95,7 +84,6 @@ export function ListOfOptions() {
           </ol>
         )}
 
-        {/* Sticky footer with the RESCAN button */}
         <div className="rescan-footer">
           <button
             type="button"

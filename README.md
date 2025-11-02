@@ -3,48 +3,66 @@
 This is a web application called 'Recall Guard', it aims to streamline the identification and removal of recalled medical products, ensuring timely compliance and safeguard patient well-being.
 
 Recall Guard utilizes optical character recognition (OCR) technology to simplify the recall check process. Users can simply photograph a medical item's label; The application automatically extracts key identifying text and cross-references it in real-time with official regulatory databases (e.g., FDA, TGA) to instantly determine its recall status.
+<br>
 
 ## Technology Stack:
 Frontend: React
 
 Backend: Node.js + Express.js + EasyOCR
 
-Database: MongoDB Atlas
+Database: [MongoDB](https://www.mongodb.com/)
 
+Authentication: [Clerk](https://clerk.com/)
 
-## 🖥️ how to run frontend:
+Testing: Jest(backend) + Vitest(frontend)
 
-    1. cd to the Frontend directory
+<br>
 
-    2. open terminal 
+## 🖥️ How to Run Frontend
 
-    3. enter command: npm i 
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/KuKustudy/team16-medical-pantry.git
+   
+2. **Navigate to the Frontend directory**
+   ```bash
+   cd Frontend
 
-    4. then enter command: npm run dev
+3. **Download necessary libraries to run the application**
+   ```bash
+   npm install
 
-    5. backend server is running on 5173 port now, go to localhost:5173 to test it out
+4. **Run the Frontend**
+   ```bash
+   npm run dev
 
+5. **Frontend server is running on 5173 local port now, open a new window in your browser and go the below directory:**
+   ```bash
+   localhost:5173
+<br>
 
 ## 🛠️ how to run backend:
 
-    1. cd to the backend directory
+1. **Clone the repository (only if you haven't clone it yet)**
+   ```bash
+   git clone https://github.com/KuKustudy/team16-medical-pantry.git
+   
+2. **Navigate to the Frontend directory**
+   ```bash
+   cd backend
 
-    2. open terminal
+3. **Download necessary libraries to run the application**
+   ```bash
+   npm install
 
-    3. enter command: npm i 
+4. **Run the Backend**
+   ```bash
+   npm run dev
 
-    4. then enter command: npm run dev
-
-    5. backend server is running on 8080 port now, go to localhost:8080/api to test it out
-
-
-## how to test frontend:
-
-    1. go to frontend directory
-
-    2. open terminal
-
-    3. enter command: npm run test
+5. **Backend server is running on 8080 local port now, open a new window in your browser and go the below directory:**
+   ```bash
+   localhost:8080/api
+<br>
 
 ## How to set up the database:
 
@@ -95,8 +113,6 @@ website can be accessed on https://www.tga.gov.au/
 
 HOW to set up test using Vitest: https://victorbruce82.medium.com/vitest-with-react-testing-library-in-react-created-with-vite-3552f0a9a19a
 
-HOW to automatically test your code using GitHub Action: 
-https://www.youtube.com/watch?v=JUKZVlIDrtY
 
 
 
