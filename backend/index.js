@@ -51,7 +51,7 @@ app.use(cors({
 
 let corsOptions
 // configuration for the app
-if (!is_exposed) {
+if (!IS_EXPOSED) {
     corsOptions = {
     // specify that we only accept request from our frontend
     origin: ["http://localhost:5173"], 
@@ -429,7 +429,7 @@ app.post("/imagescan", async (req, res) => {
 
 // specify the API address for backend
 if (process.env.NODE_ENV !== "test") {
-    if (is_exposed == "true") {
+    if (IS_EXPOSED == "true") {
         app.listen(8080, '0.0.0.0', () => {console.log('Server running on http://0.0.0.0:8080');});
     } else {
         app.listen(8080, () => console.log("Server started on port 8080"));
