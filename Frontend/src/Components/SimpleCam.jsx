@@ -8,6 +8,15 @@ export default function SimpleCam() {
   const canvasRef = useRef(null);
   const navigate = useNavigate();
 
+  const host = window.location.hostname;
+  const api_base = `http://${host}:8080`;
+
+
+  /**
+   * this function captures a photo (current frame of the web cam)
+   * and send the photo to the backend for text scanning, after getting a
+   * response from the backend, print it out in console.
+   */
   const capture = () => {
     const video = camRef.current?.video;
     const canvas = canvasRef.current;
@@ -33,7 +42,7 @@ export default function SimpleCam() {
       formData.append("photo", blob, "photo.png");
 
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", "http://localhost:8080/imageprocessing", true);
+      xhr.open("POST", `${api_base}/imageprocessing`, true);
       xhr.onreadystatechange = () => {
         if (xhr.readyState === XMLHttpRequest.DONE) {
           if (xhr.status === 200) {
