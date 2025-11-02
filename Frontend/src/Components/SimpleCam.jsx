@@ -41,26 +41,24 @@ export default function SimpleCam() {
       const formData = new FormData();
       formData.append("photo", blob, "photo.png");
 
-      const xmlHttpRequest = new XMLHttpRequest();
-      xmlHttpRequest.open("POST", `${api_base}/imageprocessing`, true);
-
-      xmlHttpRequest.send(formData);
-      console.log("frontend send out data via http request");
-
-      // got a response from backend, print it out
-      xmlHttpRequest.onreadystatechange = () => {
-        if (xmlHttpRequest.readyState === XMLHttpRequest.DONE) {
-          if (xmlHttpRequest.status === 200) {
-            // parse JSON and extract the scanned text and send to confirmation page
-            const responseFromBackend = JSON.parse(xmlHttpRequest.responseText);
-            const scannedText = responseFromBackend.data.fullText;
-            console.log("Upload successful:", scannedText);
-            navigate("/ConfirmationPage", {state: { scannedText }});
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${api_base}/imageprocessing`, true);
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            try {
+              const json = JSON.parse(xhr.responseText);
+              const scannedText =
+                json?.data?.fullText ?? json?.fullText ?? json?.text ?? "";
+              navigate("/ConfirmationPage", { state: { scannedText } });
+            } catch (e) {
+              console.error("Bad JSON from server:", e);
+            }
           } else {
-            console.log("Upload failed:", xmlHttpRequest.status);
+            console.error("Upload failed:", xhr.status, xhr.responseText);
           }
-        };
-      }
+        }
+      };
       xhr.send(formData);
     }, "image/png");
   };

@@ -445,7 +445,7 @@ if (process.env.NODE_ENV !== "test") {
 *
 * sample input: 
 * {GTIN: "023939301293",
-* name: "drug name",
+* item_name: "drug name",
 * lot_number: "0F238A",}
 * 
 */
