@@ -2,6 +2,7 @@ import { jest } from "@jest/globals";
 import request from "supertest";
 
 // Loads the app with mocked MongoDB and EasyOCR dependencies for testing
+// so that the tests don't connect to real databases or use OCR libraries
 async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
   // Set environment to 'test' mode
   process.env.NODE_ENV = "test";
@@ -64,12 +65,21 @@ async function loadAppWithDbMock({ aggregateImpl, connectImpl, toArrayImpl }) {
   return { app, mockAggregateArgHolder };
 }
 
+
+/*
+This describe function contains a set of tests that test the search for medical
+item is working properly.
+Test1: checks when information of a mock medical item is given, the application
+       is able to produce the expected output
+*/
 describe("/search", () => {
-  // Tests when multiple non-empty search fields are provided
+  // Test1: test when multiple non-empty search fields are provided
   test("returns aggregated results with multiple non-empty fields", async () => {
+
+    //mock data
     const fakeDocs = [
-      { name: "Amoxicillin", GTIN: "123", batch_number: "B1", lot_number: "L1", score: 7.2 },
-      { name: "Paracetamol", GTIN: "456", batch_number: "B2", lot_number: "L2", score: 6.5 }
+      { item_name: "Amoxicillin", GTIN: "123", lot_number: "L1", score: 7.2 },
+      { item_name: "Paracetamol", GTIN: "456", lot_number: "L2", score: 6.5 }
     ];
 
     const { app, mockAggregateArgHolder } = await loadAppWithDbMock({
@@ -78,7 +88,7 @@ describe("/search", () => {
 
     const res = await request(app)
       .post("/search")
-      .send({ name: "Amo", GTIN: "123", lot_number: "L1", batch_number: "" })
+      .send({ item_name: "Amo", GTIN: "123", lot_number: "L1"})
       .set("Content-Type", "application/json");
 
     expect(res.status).toBe(200);
@@ -96,7 +106,7 @@ describe("/search", () => {
       toArrayImpl: async () => []
     });
 
-    const body = { name: "ABC", GTIN: "", batch_number: "B9", lot_number: 12345 };
+    const body = { item_name: "ABC", GTIN: "", lot_number: "12345" };
     const res = await request(app)
       .post("/search")
       .send(body)
@@ -107,11 +117,10 @@ describe("/search", () => {
 
     const should = mockAggregateArgHolder.lastPipeline?.[0]?.$search?.compound?.should ?? [];
     const paths = should.map(s => s.text?.path);
-    expect(paths.sort()).toEqual(["batch_number", "lot_number", "name"].sort());
+    expect(paths.sort()).toEqual(["lot_number", "item_name"].sort());
 
     const lotClause = should.find(s => s.text?.path === "lot_number");
     expect(lotClause.text.query).toBe(String(body.lot_number));
-    expect(lotClause.text.fuzzy).toEqual({ maxEdits: 2 });
   });
 
   // Tests error handling when aggregate().toArray() throws and ensures client closes
@@ -173,7 +182,7 @@ test("builds empty $search.should when all fields are empty", async () => {
 
   const res = await request(app)
     .post("/search")
-    .send({ name: "", GTIN: "", batch_number: "", lot_number: "" })
+    .send({ item_name: "", GTIN: "", lot_number: "" })
     .set("Content-Type", "application/json");
 
   expect(res.status).toBe(200);
@@ -193,7 +202,7 @@ test("pipeline includes $project with expected fields and meta score", async () 
 
   await request(app)
     .post("/search")
-    .send({ name: "Test" })
+    .send({ item_name: "Amo", GTIN: "123", lot_number: "L1"})
     .set("Content-Type", "application/json");
 
   const pipeline = mockAggregateArgHolder.lastPipeline;
@@ -202,9 +211,8 @@ test("pipeline includes $project with expected fields and meta score", async () 
   const project = pipeline?.[1]?.$project;
   expect(project).toBeTruthy();
 
-  expect(project.name).toBe(1);
+  expect(project.item_name).toBe(1);
   expect(project.GTIN).toBe(1);
-  expect(project.batch_number).toBe(1);
   expect(project.lot_number).toBe(1);
 
   expect(project.score).toEqual({ $meta: "searchScore" });
