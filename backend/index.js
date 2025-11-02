@@ -112,7 +112,7 @@ async function FDA_API_calls(product_name, product_gtin){
         // push results based on product type
         if (device_data){      
             for (let i = 0; i < results.length; i++){
-                var item_name = device_data.results[i].openfda.device_name;
+                var item_name = device_data.results[i].openfda.device_name ?? device_data.results[i].product_description;
                 var action = "Recall";
                 var lot_number = device_data.results[i].code_info;
                 var data_source = "https://api.fda.gov/device/recall.json";
@@ -135,7 +135,9 @@ async function FDA_API_calls(product_name, product_gtin){
         } else {
 
             for (let i = 0; i < results.length; i++){
-                var item_name = drug_data.results[i].openfda.generic_name;
+                var item_name = drug_data.results[i].openfda.generic_name ?? 
+                                drug_data.results[i].openfda.brand_name ?? 
+                                drug_data.results[i].product_description;
                 var GTIN = drug_data.results[i].openfda.upc;
                 console.log(GTIN)
                 var action = "Recall";
@@ -188,7 +190,7 @@ async function FDA_API_calls(product_name, product_gtin){
 
 // function for fda drug queries
 async function fda_drug_recalls(name, gtin){
-    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+(openfda.generic_name:"${name}"+OR+openfda.brand_name:"${name}")&limit=10`
+    const name_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+(openfda.generic_name:"${name}"+OR+openfda.brand_name:"${name}"+OR+product_description:"${name}")&limit=10`
     const gtin_query = `https://api.fda.gov/drug/enforcement.json?search=status:"Ongoing"+AND+openfda.upc:"${gtin}"&limit=10`
 
     let data;
@@ -211,7 +213,7 @@ async function fda_drug_recalls(name, gtin){
 // function for fda device queries
 async function fda_device_recalls(name){
     let data;
-    var search_query = `https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"+AND+openfda.device_name:"${name}"&limit=10`
+    var search_query = `https://api.fda.gov/device/recall.json?search=recall_status:"Open, Classified"+AND+(openfda.device_name:"${name}"+OR+product_description:"${name}")&limit=10`
     if (name !== "") {
         const fda_response = await fetch(search_query);
         data = await fda_response.json()

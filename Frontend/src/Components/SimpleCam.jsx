@@ -49,17 +49,18 @@ export default function SimpleCam() {
 
       // got a response from backend, print it out
       xmlHttpRequest.onreadystatechange = () => {
-      if (xmlHttpRequest.readyState === XMLHttpRequest.DONE) {
-        if (xmlHttpRequest.status === 200) {
-          // parse JSON and extract the scanned text and send to confirmation page
-          const responseFromBackend = JSON.parse(xmlHttpRequest.responseText);
-          const scannedText = responseFromBackend.data.fullText;
-          console.log("Upload successful:", scannedText);
-          navigate("/ConfirmationPage", {state: { scannedText }});
-        } else {
-          console.log("Upload failed:", xmlHttpRequest.status);
-        }
-      };
+        if (xmlHttpRequest.readyState === XMLHttpRequest.DONE) {
+          if (xmlHttpRequest.status === 200) {
+            // parse JSON and extract the scanned text and send to confirmation page
+            const responseFromBackend = JSON.parse(xmlHttpRequest.responseText);
+            const scannedText = responseFromBackend.data.fullText;
+            console.log("Upload successful:", scannedText);
+            navigate("/ConfirmationPage", {state: { scannedText }});
+          } else {
+            console.log("Upload failed:", xmlHttpRequest.status);
+          }
+        };
+      }
       xhr.send(formData);
     }, "image/png");
   };
