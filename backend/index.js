@@ -510,8 +510,8 @@ async function mongo_search(medical_data) {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        const db = client.db(database_name);
-        const collection = db.collection(recall_collection);
+        const db = client.db(DATABASE_NAME);
+        const collection = db.collection(RECALL_COLLECTION);
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
