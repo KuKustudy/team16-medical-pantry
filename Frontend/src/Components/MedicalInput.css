@@ -87,8 +87,22 @@ textarea {
 /* ========== Responsive tweaks ========== */
 @media (max-width: 560px) {
   .page {
-    padding-left: 12px;
-    padding-right: 12px;
+    margin: 8px auto;
+    padding: 0px 18px;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+    margin-top: 16px;
+    margin-bottom: 12px;
+  }
+  h3 {
+    font-size: 1rem;
+    margin: 10px 0 6px;
+  }
+  input[type="text"], textarea {
+    font-size: 16px;
+    padding: 8px 10px;
   }
 
   /* Stack all buttons vertically and make them full-width */
@@ -110,6 +124,7 @@ textarea {
   .page {
     max-width: 720px;
   }
+
 }
 
 /* Error text */
