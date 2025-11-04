@@ -1,6 +1,14 @@
 html, body, #root {
   height: 100%;
 }
+.simplecam-screen {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 7rem); 
+  margin-top: 7rem;          
+  background: #000;
+}
+
 body {
   margin: 0;
   overflow: hidden;
