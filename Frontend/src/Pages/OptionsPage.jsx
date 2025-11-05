@@ -34,8 +34,13 @@ export function ListOfOptions() {
                 <li key={index} className="result-item">
                   <div className="option-row">
                     <span className="text">
-                      <b>{item.item_name}</b> {item.GTIN && (Array.isArray(item.GTIN) ? item.GTIN.join(", ") : item.GTIN)}
-                        {/* If there is a GTIN then display it, else don't show it*/}
+                      <b>{item.item_name}</b>
+                        {item.GTIN ? (
+                          <>
+                            {" GTIN: "}
+                            {Array.isArray(item.GTIN) ? item.GTIN.join(", ") : item.GTIN}
+                          </>
+                        ) : null}
                       {item.lot_number ? ` | Lot: ${item.lot_number}` : ""}
                     </span>
 
