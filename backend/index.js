@@ -643,28 +643,9 @@ async function mongo_recall_insert(medical_data) {
         // collection.find().toArray().then(result => console.log(result));
 
         // convert medical_data object into mongo search
+        medical_data.GTIN = medical_data.GTIN.split(",");
+        medical_data.lot_number = medical_data.lot_number.split(","); 
         await collection.insertOne(medical_data);
-    
-    } finally {
-        // Ensures that the client will close when you finish/error
-        await client.close();
-    }
-}
-
-async function mongo_search_history_insert(name, medical_data) {
-    await console.log("inserting ", medical_data);
-    try {
-        // Connect the client to the server	(optional starting in v4.7)
-        await client.connect()
-        // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        const db = client.db("recall-guard");
-        const collection = db.collection("medical_items");
-        // collection.find().toArray().then(result => console.log(result));
-
-        // convert medical_data object into mongo search
-        await collection.insertMany(medical_data);
     
     } finally {
         // Ensures that the client will close when you finish/error

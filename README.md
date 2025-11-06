@@ -66,7 +66,7 @@ Testing: Jest(backend) + Vitest(frontend)
 
 ## How to set up the database:
 
-1. Sign up or log in to [mongodb.com](mongodb.com).
+1. Sign up or log in to [mongodb.com](https://www.mongodb.com).
 
 2. Create your Atlas database, as described in the [MongoDB documentation](https://www.mongodb.com/docs/get-started/?language=nodejs).
 
